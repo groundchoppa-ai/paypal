@@ -5533,6 +5533,7 @@ body::before {
   const licenseLoginError = document.getElementById("licenseLoginError");
   const LICENSE_STORE_KEY = "yskellai_license_keys";
   const ADMIN_LICENSE_KEY = "YSKELL-ADMIN-2026";
+  const LICENSE_API_URL = "/.netlify/functions/license-store";
 
   function getLicenseRecords() {
     try { return JSON.parse(localStorage.getItem(LICENSE_STORE_KEY) || "[]"); } catch (e) { return []; }
@@ -5542,58 +5543,51 @@ body::before {
     try { localStorage.setItem(LICENSE_STORE_KEY, JSON.stringify(records)); } catch (e) {}
   }
 
-  function mergeLicenseRecords(localRecords, remoteRecords) {
-    var merged = Array.isArray(localRecords) ? localRecords.slice() : [];
-    var remote = Array.isArray(remoteRecords) ? remoteRecords : [];
-    var seen = new Map();
-    merged.forEach(function(record) { if (record && record.key) seen.set(String(record.key).toUpperCase(), record); });
-    remote.forEach(function(record) { if (record && record.key) { var key = String(record.key).toUpperCase(); if (!seen.has(key)) seen.set(key, record); } });
-    return Array.from(seen.values());
-  }
-
-  async function fetchRemoteLicenseRecords() {
+  async function fetchSharedLicenseRecords() {
     try {
-      if (!fgSupabase || !fgSupabase.from) return [];
-      const { data, error } = await fgSupabase.from("license_keys").select("*");
-      if (error || !data || !data.length) return [];
-      return data.map(function(row) {
-        return {
-          key: String(row.key || row.license_key || "").trim().toUpperCase(),
-          label: row.label || row.customer_label || "Unassigned",
-          plan: row.plan || "lifetime",
-          created: row.created || row.created_at || new Date().toLocaleDateString(),
-          expiresAt: row.expires_at || row.expiresAt || null
-        };
-      });
+      const res = await fetch(LICENSE_API_URL, { method: "GET" });
+      if (!res.ok) return [];
+      const rows = await res.json();
+      return Array.isArray(rows) ? rows : [];
     } catch (e) {
-      safeConsole.warn("Remote license fetch failed; using local fallback.", e);
+      safeConsole.warn("Shared license fetch failed; using local fallback.", e);
       return [];
     }
   }
 
-  async function syncLicenseToSupabase(record) {
+  async function saveSharedLicenseRecord(record) {
     try {
-      if (!fgSupabase || !fgSupabase.from || !record || !record.key) return;
-      const row = {
-        key: String(record.key).trim().toUpperCase(),
-        label: String(record.label || "Unassigned"),
-        plan: String(record.plan || "lifetime"),
-        created: record.created || new Date().toLocaleDateString(),
-        expires_at: record.expiresAt || null
-      };
-      await fgSupabase.from("license_keys").upsert(row, { onConflict: "key" });
+      if (!record || !record.key) return;
+      await fetch(LICENSE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save", record: record })
+      });
     } catch (e) {
-      safeConsole.warn("Remote license sync failed; local fallback remains active.", e);
+      safeConsole.warn("Shared license save failed; local fallback remains active.", e);
     }
   }
 
-  async function revokeRemoteLicenseRecord(key) {
+  async function revokeSharedLicenseRecord(key) {
     try {
-      if (!fgSupabase || !fgSupabase.from || !key) return;
-      await fgSupabase.from("license_keys").delete().eq("key", String(key).trim().toUpperCase());
+      if (!key) return;
+      await fetch(LICENSE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", key: key })
+      });
     } catch (e) {
-      safeConsole.warn("Remote license revoke failed; local fallback remains active.", e);
+      safeConsole.warn("Shared license revoke failed; local fallback remains active.", e);
     }
+  }
+
+  function mergeLicenseRecords(localRecords, sharedRecords) {
+    var merged = Array.isArray(localRecords) ? localRecords.slice() : [];
+    var remote = Array.isArray(sharedRecords) ? sharedRecords : [];
+    var seen = new Map();
+    merged.forEach(function(record) { if (record && record.key) seen.set(String(record.key).toUpperCase(), record); });
+    remote.forEach(function(record) { if (record && record.key) { var key = String(record.key).toUpperCase(); if (!seen.has(key)) seen.set(key, record); } });
+    return Array.from(seen.values());
   }
 
   function normalizeLicenseKey(value) { return String(value || "").trim().toUpperCase(); }
@@ -5648,8 +5642,8 @@ body::before {
     if (!body) return;
 
     var localRecords = getLicenseRecords();
-    var remoteRecords = await fetchRemoteLicenseRecords();
-    var records = mergeLicenseRecords(localRecords, remoteRecords);
+    var sharedRecords = await fetchSharedLicenseRecords();
+    var records = mergeLicenseRecords(localRecords, sharedRecords);
     var search = String((document.getElementById("adminLicenseSearch") || {}).value || "").trim().toLowerCase();
 
     var visibleRecords = records.map(function(record, index) { return { record: record, index: index }; }).filter(function(item) {
@@ -5692,9 +5686,9 @@ body::before {
     var key = normalizeLicenseKey(licenseKeyInput.value);
     if (key === ADMIN_LICENSE_KEY) return grantLicenseAccess(true);
 
-    var records = getLicenseRecords();
-    var remoteRecords = await fetchRemoteLicenseRecords();
-    var mergedRecords = mergeLicenseRecords(records, remoteRecords);
+    var localRecords = getLicenseRecords();
+    var sharedRecords = await fetchSharedLicenseRecords();
+    var mergedRecords = mergeLicenseRecords(localRecords, sharedRecords);
     var record = mergedRecords.find(function(item) { return String(item.key || "").toUpperCase() === key; });
 
     if (!record || licenseCountdown(record.expiresAt).expired) {
@@ -5713,7 +5707,7 @@ body::before {
     var record = { key: key, label: document.getElementById("adminKeyLabel").value.trim(), plan: plan, created: new Date().toLocaleDateString(), expiresAt: licenseExpiryForPlan(plan) };
     records.unshift(record);
     saveLicenseRecords(records);
-    await syncLicenseToSupabase(record);
+    await saveSharedLicenseRecord(record);
     document.getElementById("generatedLicenseKey").textContent = key;
     document.getElementById("adminKeyOutput").style.display = "flex";
     document.getElementById("adminStatus").textContent = "License generated.";
@@ -5755,7 +5749,7 @@ body::before {
   document.getElementById("licenseTableBody")?.addEventListener("click", async function(event) {
     var copyButton = event.target.closest("[data-copy-license]");
     if (copyButton) {
-      var records = mergeLicenseRecords(getLicenseRecords(), await fetchRemoteLicenseRecords());
+      var records = mergeLicenseRecords(getLicenseRecords(), await fetchSharedLicenseRecords());
       var copyKey = records[Number(copyButton.dataset.copyLicense)]?.key || "";
       if (navigator.clipboard && copyKey) navigator.clipboard.writeText(copyKey).then(function() { document.getElementById("adminStatus").textContent = "License copied to clipboard."; });
       return;
@@ -5764,7 +5758,7 @@ body::before {
     var button = event.target.closest("[data-revoke-license]");
     if (!button) return;
 
-    var records = mergeLicenseRecords(getLicenseRecords(), await fetchRemoteLicenseRecords());
+    var records = mergeLicenseRecords(getLicenseRecords(), await fetchSharedLicenseRecords());
     var keyToRevoke = records[Number(button.dataset.revokeLicense)]?.key || "";
 
     if (keyToRevoke) {
@@ -5772,7 +5766,7 @@ body::before {
       var idx = local.findIndex(function(item) { return String(item.key).toUpperCase() === String(keyToRevoke).trim().toUpperCase(); });
       if (idx >= 0) local.splice(idx, 1);
       saveLicenseRecords(local);
-      await revokeRemoteLicenseRecord(keyToRevoke);
+      await revokeSharedLicenseRecord(keyToRevoke);
     }
 
     renderLicenseTable();
