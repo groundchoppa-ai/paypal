@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- YskellAI Build 1780072342 -->
+ YskellAI Build 1780072342 -->
 
 <html lang="en">
 <head>
@@ -5542,6 +5542,51 @@ body::before {
     try { localStorage.setItem(LICENSE_STORE_KEY, JSON.stringify(records)); } catch (e) {}
   }
 
+  function mergeLicenseRecords(localRecords, remoteRecords) {
+    var merged = Array.isArray(localRecords) ? localRecords.slice() : [];
+    var remote = Array.isArray(remoteRecords) ? remoteRecords : [];
+    var seen = new Map();
+    merged.forEach(function(record) { if (record && record.key) seen.set(String(record.key).toUpperCase(), record); });
+    remote.forEach(function(record) { if (record && record.key) { var key = String(record.key).toUpperCase(); if (!seen.has(key)) seen.set(key, record); } });
+    return Array.from(seen.values());
+  }
+
+  async function fetchRemoteLicenseRecords() {
+    try {
+      if (!fgSupabase || !fgSupabase.from) return [];
+      const { data, error } = await fgSupabase.from("license_keys").select("*");
+      if (error || !data || !data.length) return [];
+      return data.map(function(row) {
+        return {
+          key: String(row.key || row.license_key || "").trim().toUpperCase(),
+          label: row.label || row.customer_label || "Unassigned",
+          plan: row.plan || "lifetime",
+          created: row.created || row.created_at || new Date().toLocaleDateString(),
+          expiresAt: row.expires_at || row.expiresAt || null
+        };
+      });
+    } catch (e) {
+      safeConsole.warn("Remote license fetch failed; using local fallback.", e);
+      return [];
+    }
+  }
+
+  async function syncLicenseToSupabase(record) {
+    try {
+      if (!fgSupabase || !fgSupabase.from || !record || !record.key) return;
+      const row = {
+        key: String(record.key).trim().toUpperCase(),
+        label: String(record.label || "Unassigned"),
+        plan: String(record.plan || "lifetime"),
+        created: record.created || new Date().toLocaleDateString(),
+        expires_at: record.expiresAt || null
+      };
+      await fgSupabase.from("license_keys").upsert(row, { onConflict: "key" });
+    } catch (e) {
+      safeConsole.warn("Remote license sync failed; local fallback remains active.", e);
+    }
+  }
+
   function normalizeLicenseKey(value) { return String(value || "").trim().toUpperCase(); }
 
   function escapeLicenseText(value) {
@@ -5626,26 +5671,33 @@ body::before {
     return "YSKELL-" + Array.from(bytes).map(function(byte) { return byte.toString(16).padStart(2, "0"); }).join("").match(/.{1,6}/g).join("-").toUpperCase();
   }
 
-  if (licenseLoginForm) licenseLoginForm.addEventListener("submit", function(event) {
+  if (licenseLoginForm) licenseLoginForm.addEventListener("submit", async function(event) {
     event.preventDefault();
     var key = normalizeLicenseKey(licenseKeyInput.value);
-    var records = getLicenseRecords();
-    var record = records.find(function(item) { return item.key === key; });
     if (key === ADMIN_LICENSE_KEY) return grantLicenseAccess(true);
+
+    var records = getLicenseRecords();
+    var remoteRecords = await fetchRemoteLicenseRecords();
+    var mergedRecords = mergeLicenseRecords(records, remoteRecords);
+    var record = mergedRecords.find(function(item) { return String(item.key || "").toUpperCase() === key; });
+
     if (!record || licenseCountdown(record.expiresAt).expired) {
       licenseLoginError.textContent = record ? "That license key has expired." : "That license key is not recognized.";
       return;
     }
+
     currentLicenseRecord = record;
     grantLicenseAccess(false);
   });
 
-  document.getElementById("generateLicenseBtn")?.addEventListener("click", function() {
+  document.getElementById("generateLicenseBtn")?.addEventListener("click", async function() {
     var key = makeLicenseKey();
     var records = getLicenseRecords();
     var plan = document.getElementById("adminKeyDuration").value;
-    records.unshift({ key: key, label: document.getElementById("adminKeyLabel").value.trim(), plan: plan, created: new Date().toLocaleDateString(), expiresAt: licenseExpiryForPlan(plan) });
+    var record = { key: key, label: document.getElementById("adminKeyLabel").value.trim(), plan: plan, created: new Date().toLocaleDateString(), expiresAt: licenseExpiryForPlan(plan) };
+    records.unshift(record);
     saveLicenseRecords(records);
+    await syncLicenseToSupabase(record);
     document.getElementById("generatedLicenseKey").textContent = key;
     document.getElementById("adminKeyOutput").style.display = "flex";
     document.getElementById("adminStatus").textContent = "License generated.";
