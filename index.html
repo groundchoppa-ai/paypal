@@ -5695,16 +5695,22 @@ body::before {
 
   document.getElementById("adminLicenseSearch")?.addEventListener("input", renderLicenseTable);
 
-  document.getElementById("clearExpiredLicensesBtn")?.addEventListener("click", function() {
-    var records = getLicenseRecords().filter(function(record) { return !licenseCountdown(record.expiresAt).expired; });
-    saveLicenseRecords(records);
+  document.getElementById("clearExpiredLicensesBtn")?.addEventListener("click", async function() {
+    var records = await fetchSharedLicenseRecords();
+    var active = records.filter(function(record) { return !licenseCountdown(record.expiresAt).expired; });
+    await fetch(LICENSE_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "replace", records: active })
+    });
     renderLicenseTable();
     document.getElementById("adminStatus").textContent = "Expired licenses cleared.";
   });
 
-  document.getElementById("exportLicensesBtn")?.addEventListener("click", function() {
+  document.getElementById("exportLicensesBtn")?.addEventListener("click", async function() {
     var rows = [["Label", "Plan", "Key", "Created", "Expires", "Status"]];
-    getLicenseRecords().forEach(function(record) {
+    var records = await fetchSharedLicenseRecords();
+    records.forEach(function(record) {
       rows.push([record.label || "Unassigned", licensePlanLabel(record.plan), record.key, record.created, record.expiresAt || "Lifetime", licenseCountdown(record.expiresAt).expired ? "Expired" : "Active"]);
     });
     var csv = rows.map(function(row) { return row.map(function(value) { return '"' + String(value).replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
