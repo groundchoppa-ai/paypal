@@ -1,6 +1,4 @@
 <!DOCTYPE html>
- YskellAI Build 1780072342 -->
-
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -4283,7 +4281,6 @@ body::before {
 <!-- NAV -->
 <nav class="app-nav">
 <div class="nav-link nav-active" data-tab="dashboard">📊 Dashboard</div>
-<div class="nav-link" data-tab="mastermind" id="mastermindNavLink">🧠 Mastermind AI</div>
 <div class="nav-link" data-tab="vision" id="visionNavLink">📈 H&L Optimizer</div>
 <div class="nav-link" data-tab="activity">⚡ Activity</div>
 <div class="nav-link" data-tab="notes">📝 Notes</div>
@@ -4829,30 +4826,6 @@ body::before {
 
 
 <!-- ═══════════ PROFILE TAB ═══════════ -->
-
-<main id="mastermindTab" class="fg-mastermind-tab" style="display:none;">
-  <section class="card section-card fg-mastermind-card">
-    <div class="fg-mastermind-head">
-      <div class="fg-mastermind-title-wrap">
-        <div class="card-icon-bar"></div>
-        <div class="fg-mastermind-copy">
-          <div class="card-title">🧠 Mastermind AI Signals</div>
-          <div class="card-sub">Built into YskellAI membership. Scan markets, review signal confidence, and use AI guidance before entering trades.</div>
-        </div>
-      </div>
-      <div class="fg-mastermind-actions">
-        <a class='btn btn-connect' href='/mastermind_ai?v=4.2-schemafix' rel='noopener' target='_blank'>Open Full Screen</a>
-        <button class="btn btn-connect" id="reloadMastermindBtn" type="button">Reload Scanner</button>
-      </div>
-    </div>
-    <div id="mastermindInlineNotice" class="fg-mastermind-notice">
-      <span>Mastermind AI is loaded inside YskellAI. Use <strong>Open Full Screen</strong> only if your browser blocks the embedded scanner.</span>
-    </div>
-    <div class="fg-mastermind-frame-wrap">
-      <iframe id="mastermindFrame" data-src="./mastermind_ai.html?embed=1&v=4.2-schemafix" src="about:blank" title="Mastermind AI Signals"></iframe>
-    </div>
-  </section>
-</main>
 
 <main id="profileTab" style="display:none;">
 
@@ -5422,6 +5395,7 @@ body::before {
     </label>
     <label class="login-label">Plan
       <select class="admin-select" id="adminKeyDuration">
+        <option value="day">1 day</option>
         <option value="month">1 month</option>
         <option value="year">1 year</option>
         <option value="lifetime">Lifetime</option>
@@ -5533,43 +5507,154 @@ body::before {
   const licenseLoginError = document.getElementById("licenseLoginError");
   const ADMIN_LICENSE_KEY = "YSKELL-ADMIN-2026";
   const LICENSE_API_URL = "/.netlify/functions/license-store";
+  const LICENSE_LOCAL_KEY = "yskellai_license_records";
+  const WEB_DATA_LOCAL_KEY = "yskellai_web_saved_data";
+
+  function loadSavedData(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      var parsed = JSON.parse(raw);
+      return parsed;
+    } catch (e) {
+      safeConsole.warn("Saved data load failed.", e);
+      return fallback;
+    }
+  }
+
+  function saveSavedData(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      safeConsole.warn("Saved data write failed.", e);
+      return false;
+    }
+  }
+
+  function readLocalLicenseRecords() {
+    return loadSavedData(LICENSE_LOCAL_KEY, []);
+  }
+
+  function writeLocalLicenseRecords(records) {
+    saveSavedData(LICENSE_LOCAL_KEY, Array.isArray(records) ? records : []);
+  }
+
+  function getLicenseRecords() {
+    return readLocalLicenseRecords();
+  }
+
+  function saveLicenseRecords(records) {
+    writeLocalLicenseRecords(records);
+  }
+
+  function saveWebData(payload) {
+    return saveSavedData(WEB_DATA_LOCAL_KEY, payload || {});
+  }
+
+  function loadWebData(fallback) {
+    return loadSavedData(WEB_DATA_LOCAL_KEY, fallback || {});
+  }
 
   async function fetchSharedLicenseRecords() {
     try {
       const res = await fetch(LICENSE_API_URL, { method: "GET" });
-      if (!res.ok) return [];
+      if (!res.ok) {
+        return readLocalLicenseRecords();
+      }
       const rows = await res.json();
-      return Array.isArray(rows) ? rows : [];
+      if (Array.isArray(rows)) {
+        writeLocalLicenseRecords(rows);
+        return rows;
+      }
+      return readLocalLicenseRecords();
     } catch (e) {
       safeConsole.warn("Shared license fetch failed.", e);
-      return [];
+      return readLocalLicenseRecords();
     }
   }
 
   async function saveSharedLicenseRecord(record) {
     try {
       if (!record || !record.key) return;
-      await fetch(LICENSE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "save", record: record })
-      });
+      const existing = readLocalLicenseRecords();
+      const index = existing.findIndex(function(item) { return String(item.key || "").toUpperCase() === String(record.key || "").toUpperCase(); });
+      if (index >= 0) existing[index] = record;
+      else existing.unshift(record);
+      writeLocalLicenseRecords(existing);
+
+      var webData = loadWebData({ licenses: existing });
+      webData.licenses = existing;
+      saveWebData(webData);
+
+      try {
+        await fetch(LICENSE_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "save", record: record })
+        });
+      } catch (e) {
+        safeConsole.warn("Shared license save failed.", e);
+      }
     } catch (e) {
       safeConsole.warn("Shared license save failed.", e);
+      const existing = readLocalLicenseRecords();
+      const index = existing.findIndex(function(item) { return String(item.key || "").toUpperCase() === String(record.key || "").toUpperCase(); });
+      if (index >= 0) existing[index] = record;
+      else existing.unshift(record);
+      writeLocalLicenseRecords(existing);
     }
   }
 
   async function revokeSharedLicenseRecord(key) {
     try {
       if (!key) return;
-      await fetch(LICENSE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "delete", key: key })
+      const records = readLocalLicenseRecords().filter(function(record) {
+        return String(record.key || "").toUpperCase() !== String(key || "").toUpperCase();
       });
+      writeLocalLicenseRecords(records);
+
+      var webData = loadWebData({ licenses: records });
+      webData.licenses = records;
+      saveWebData(webData);
+
+      try {
+        await fetch(LICENSE_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "delete", key: key })
+        });
+      } catch (e) {
+        safeConsole.warn("Shared license revoke failed.", e);
+      }
     } catch (e) {
       safeConsole.warn("Shared license revoke failed.", e);
+      const records = readLocalLicenseRecords().filter(function(record) {
+        return String(record.key || "").toUpperCase() !== String(key || "").toUpperCase();
+      });
+      writeLocalLicenseRecords(records);
     }
+  }
+
+  async function validateLicenseKey(key) {
+    try {
+      const res = await fetch(LICENSE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "validate", key: key })
+      });
+      if (res.ok) {
+        const payload = await res.json();
+        if (payload && payload.ok && payload.record) return payload.record;
+      }
+    } catch (e) {
+      safeConsole.warn("Remote license validation failed.", e);
+    }
+
+    const records = await fetchSharedLicenseRecords();
+    const record = records.find(function(item) { return String(item.key || "").toUpperCase() === String(key || "").toUpperCase(); });
+    if (!record || licenseCountdown(record.expiresAt).expired) return null;
+    return record;
   }
 
   function normalizeLicenseKey(value) { return String(value || "").trim().toUpperCase(); }
@@ -5581,14 +5666,18 @@ body::before {
   }
 
   function licensePlanLabel(plan) {
-    return plan === "month" ? "1 month" : plan === "year" ? "1 year" : "Lifetime";
+    if (plan === "day") return "1 day";
+    if (plan === "month") return "1 month";
+    if (plan === "year") return "1 year";
+    return "Lifetime";
   }
 
   function licenseExpiryForPlan(plan) {
     if (plan === "lifetime") return null;
     var expiry = new Date();
     if (plan === "year") expiry.setFullYear(expiry.getFullYear() + 1);
-    else expiry.setMonth(expiry.getMonth() + 1);
+    else if (plan === "month") expiry.setMonth(expiry.getMonth() + 1);
+    else expiry.setDate(expiry.getDate() + 1);
     return expiry.toISOString();
   }
 
@@ -5666,11 +5755,9 @@ body::before {
     var key = normalizeLicenseKey(licenseKeyInput.value);
     if (key === ADMIN_LICENSE_KEY) return grantLicenseAccess(true);
 
-    var records = await fetchSharedLicenseRecords();
-    var record = records.find(function(item) { return String(item.key || "").toUpperCase() === key; });
-
-    if (!record || licenseCountdown(record.expiresAt).expired) {
-      licenseLoginError.textContent = record ? "That license key has expired." : "That license key is not recognized.";
+    var record = await validateLicenseKey(key);
+    if (!record) {
+      licenseLoginError.textContent = "That license key is not recognized or has expired.";
       return;
     }
 
@@ -5698,11 +5785,21 @@ body::before {
   document.getElementById("clearExpiredLicensesBtn")?.addEventListener("click", async function() {
     var records = await fetchSharedLicenseRecords();
     var active = records.filter(function(record) { return !licenseCountdown(record.expiresAt).expired; });
-    await fetch(LICENSE_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "replace", records: active })
-    });
+    saveLicenseRecords(active);
+
+    var webData = loadWebData({ licenses: active });
+    webData.licenses = active;
+    saveWebData(webData);
+
+    try {
+      await fetch(LICENSE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "replace", records: active })
+      });
+    } catch (e) {
+      safeConsole.warn("Clear expired licenses sync failed.", e);
+    }
     renderLicenseTable();
     document.getElementById("adminStatus").textContent = "Expired licenses cleared.";
   });
@@ -5883,7 +5980,6 @@ body::before {
   const tabs = {
     dashboard: document.getElementById("dashboardTab"),
     vision: document.getElementById("visionTab"),
-    mastermind: document.getElementById("mastermindTab"),
     activity: document.getElementById("activityTab"),
     notes: document.getElementById("notesTab"),
     admin: document.getElementById("adminTab"),
@@ -5891,37 +5987,18 @@ body::before {
   };
 
   // YskellAI tab safety patch:
-  // Some mobile browsers can treat injected <main> sections as nested under Dashboard,
-  // which causes Mastermind AI to look blank when Dashboard is hidden. Normalize all
-  // tab roots as direct children of .shell-content before tab switching.
+  // Normalize tab roots as direct children of .shell-content before tab switching.
   (function normalizeYskellAITabs(){
     try {
       const host = document.getElementById("mainContent") || document.querySelector(".shell-content");
       if (!host) return;
-      ["dashboard","mastermind","vision","activity","notes","admin","profile"].forEach(function(key){
+      ["dashboard","vision","activity","notes","admin","profile"].forEach(function(key){
         const node = tabs[key];
         if (node && node.parentElement !== host) host.appendChild(node);
       });
     } catch(e) { console.warn("[YskellAI tabs normalize]", e); }
   })();
 
-  function loadMastermindFrame(forceReload){
-    try {
-      const frame = document.getElementById("mastermindFrame");
-      if (!frame) return;
-      const base = frame.getAttribute("data-src") || "./mastermind_ai.html?embed=1&v=4.2-schemafix";
-      if (forceReload || !frame.dataset.loaded || frame.src === "about:blank") {
-        frame.dataset.loaded = "1";
-        frame.src = forceReload ? (base + "?fg_reload=" + Date.now()) : base;
-      }
-    } catch(e) { console.warn("[Mastermind frame load]", e); }
-  }
-
-  const reloadMastermindBtn = document.getElementById("reloadMastermindBtn");
-  if (reloadMastermindBtn && !reloadMastermindBtn.dataset.bound) {
-    reloadMastermindBtn.dataset.bound = "1";
-    reloadMastermindBtn.addEventListener("click", function(){ loadMastermindFrame(true); });
-  }
   navLinks.forEach((link) => {
     link.addEventListener("click", () => {
       const target = link.dataset.tab;
@@ -5931,9 +6008,6 @@ body::before {
       }
       if (target === "profile") {
         try { updateProfileTab(); } catch(e) {}
-      }
-      if (target === "mastermind") {
-        try { loadMastermindFrame(false); } catch(e) {}
       }
 
       navLinks.forEach((l) => l.classList.remove("nav-active"));
@@ -14479,8 +14553,8 @@ input:focus,select:focus,textarea:focus,.input:focus,.select:focus,.login-input:
 .input-row,.pressure-stat,.tick-metric,.trade-meta,.trade-log-entry,.fgci-x,.fgt-skip,.analytics-card,
 .analytics-wide,.hl-edge-kpi,.hl-preset{ color:var(--asoft) !important; }
 
-/* tame the white shimmer sweep on stat pills → holo tint */
-.stat-pill::after{ background:linear-gradient(90deg,transparent,rgba(168,85,247,.16),transparent) !important; }
+/* tame the white shimmer sweep on stat pills → gold tint */
+.stat-pill::after{ background:linear-gradient(90deg,transparent,rgba(212,175,55,.22),transparent) !important; }
 
 /* darken plain text/number inputs (leave checkboxes & toggle switches alone) */
 input[type="text"],input[type="number"],input[type="email"],input[type="password"],input[type="search"],
