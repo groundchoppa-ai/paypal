@@ -5587,6 +5587,15 @@ body::before {
     }
   }
 
+  async function revokeRemoteLicenseRecord(key) {
+    try {
+      if (!fgSupabase || !fgSupabase.from || !key) return;
+      await fgSupabase.from("license_keys").delete().eq("key", String(key).trim().toUpperCase());
+    } catch (e) {
+      safeConsole.warn("Remote license revoke failed; local fallback remains active.", e);
+    }
+  }
+
   function normalizeLicenseKey(value) { return String(value || "").trim().toUpperCase(); }
 
   function escapeLicenseText(value) {
@@ -5634,27 +5643,34 @@ body::before {
     try { if (typeof window.fgShowOnboarding === "function") window.fgShowOnboarding(); } catch(e) {}
   }
 
-  function renderLicenseTable() {
+  async function renderLicenseTable() {
     var body = document.getElementById("licenseTableBody");
     if (!body) return;
-    var records = getLicenseRecords();
+
+    var localRecords = getLicenseRecords();
+    var remoteRecords = await fetchRemoteLicenseRecords();
+    var records = mergeLicenseRecords(localRecords, remoteRecords);
     var search = String((document.getElementById("adminLicenseSearch") || {}).value || "").trim().toLowerCase();
+
     var visibleRecords = records.map(function(record, index) { return { record: record, index: index }; }).filter(function(item) {
       if (!search) return true;
       return String(item.record.label || "").toLowerCase().includes(search) || String(item.record.key || "").toLowerCase().includes(search);
     });
+
     var activeCount = records.filter(function(record) { return !licenseCountdown(record.expiresAt).expired; }).length;
     var expiringCount = records.filter(function(record) {
       if (!record.expiresAt) return false;
       var remaining = new Date(record.expiresAt).getTime() - Date.now();
       return remaining > 0 && remaining <= 7 * 86400000;
     }).length;
+
     var totalEl = document.getElementById("adminTotalKeys");
     var activeEl = document.getElementById("adminActiveKeys");
     var expiringEl = document.getElementById("adminExpiringKeys");
     if (totalEl) totalEl.textContent = records.length;
     if (activeEl) activeEl.textContent = activeCount;
     if (expiringEl) expiringEl.textContent = expiringCount;
+
     body.innerHTML = visibleRecords.length ? visibleRecords.map(function(item) {
       var record = item.record;
       var index = item.index;
@@ -5736,19 +5752,29 @@ body::before {
     if (navigator.clipboard) navigator.clipboard.writeText(key).then(function() { document.getElementById("adminStatus").textContent = "License copied to clipboard."; });
   });
 
-  document.getElementById("licenseTableBody")?.addEventListener("click", function(event) {
+  document.getElementById("licenseTableBody")?.addEventListener("click", async function(event) {
     var copyButton = event.target.closest("[data-copy-license]");
     if (copyButton) {
-      var copyRecords = getLicenseRecords();
-      var copyKey = copyRecords[Number(copyButton.dataset.copyLicense)]?.key || "";
+      var records = mergeLicenseRecords(getLicenseRecords(), await fetchRemoteLicenseRecords());
+      var copyKey = records[Number(copyButton.dataset.copyLicense)]?.key || "";
       if (navigator.clipboard && copyKey) navigator.clipboard.writeText(copyKey).then(function() { document.getElementById("adminStatus").textContent = "License copied to clipboard."; });
       return;
     }
+
     var button = event.target.closest("[data-revoke-license]");
     if (!button) return;
-    var records = getLicenseRecords();
-    records.splice(Number(button.dataset.revokeLicense), 1);
-    saveLicenseRecords(records);
+
+    var records = mergeLicenseRecords(getLicenseRecords(), await fetchRemoteLicenseRecords());
+    var keyToRevoke = records[Number(button.dataset.revokeLicense)]?.key || "";
+
+    if (keyToRevoke) {
+      var local = getLicenseRecords();
+      var idx = local.findIndex(function(item) { return String(item.key).toUpperCase() === String(keyToRevoke).trim().toUpperCase(); });
+      if (idx >= 0) local.splice(idx, 1);
+      saveLicenseRecords(local);
+      await revokeRemoteLicenseRecord(keyToRevoke);
+    }
+
     renderLicenseTable();
     document.getElementById("adminStatus").textContent = "License revoked.";
   });
