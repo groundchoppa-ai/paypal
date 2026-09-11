@@ -4609,6 +4609,7 @@ body::before {
 <button class="contract-tab active" data-mode="underover">Under / Over <span class="badge-preview">MAIN</span></button>
 <button class="contract-tab" data-mode="differ">Differ</button>
 <button class="contract-tab" data-mode="evenodd">Even / Odd</button>
+<button class="contract-tab" data-mode="matches">Matches</button>
 <button class="contract-tab" data-mode="higherlower" id="higherLowerTab">
                 Higher / Lower <span class="badge-preview" id="hlBadge">NEW</span>
 </button>
@@ -6338,7 +6339,7 @@ body::before {
     // labels + hint text
     if (!liveStrategyLabel || !smartHintBox) return;
 
-    if (false) {
+    if (mode === "matches" || mode === "match") {
       liveStrategyLabel.textContent = "Digit Match (Hybrid AI)";
       smartHintBox.textContent =
         "Hybrid AI Match: uses frequency + momentum + pattern... to hunt high-probability 8x entries. Start small, let stats build.";
@@ -9117,48 +9118,14 @@ if (currentTrade && currentTrade.false) {
             trackContractPerformance(currentTrade.mode, profit);
           }
 
-          const tp = parseFloat(tpInput.value) || 0;
-          const sl = parseFloat(slInput.value) || 0;
-          const maxLs = parseInt(maxLossStreakInput.value, 10) || 0;
+                  const maxLs = parseInt(maxLossStreakInput.value, 10) || 0;
 
-          if (tp && netProfit >= tp) {
-            isRunning = false;
-            startBtn.disabled = false;
-            start3xBtn.disabled = false;
-            stopBtn.disabled = true;
-            signalLabel.textContent = "Stopped – TP reached.";
-            activityModePill.textContent = "STOPPED";
-
-            // YskellAI TP Hit Popup — direct trigger when Take Profit target is reached.
-            // Only celebrate the first crossing of the session; otherwise every winning
-            // trade after the target stays hit re-shows the popup.
-            if (!tpPopupShownForSession) {
-              tpPopupShownForSession = true;
-              try {
-                if (typeof window.fgShowAnimatedTPHit === "function") {
-                  window.fgShowAnimatedTPHit(netProfit, null, wins + losses);
-                } else if (typeof window.showTPPopup === "function") {
-                  window.showTPPopup(netProfit, null, wins + losses);
-                }
-              } catch (e) {
-                console.warn("TP popup trigger failed", e);
-              }
-            }
-          } else if (sl && netProfit <= -Math.abs(sl)) {
-            isRunning = false;
-            startBtn.disabled = false;
-            start3xBtn.disabled = false;
-            stopBtn.disabled = true;
-            signalLabel.textContent = "Stopped – SL hit.";
-            activityModePill.textContent = "STOPPED";
-          } else {
-            if (maxLs && lossStreak >= maxLs) {
-              activityModePill.textContent = "RISK";
-              activityText.textContent = "Loss streak warning hit — YskellAI reduced aggression but keeps respecting only TP / SL.";
-              rfCooldownTicks = Math.max(rfCooldownTicks, 10);
-            }
-            resetTradeState();
+          if (maxLs && lossStreak >= maxLs) {
+            activityModePill.textContent = "RISK";
+            activityText.textContent = "Loss streak warning hit — YskellAI reduced aggression but keeps respecting custom TP / SL inputs.";
+            rfCooldownTicks = Math.max(rfCooldownTicks, 10);
           }
+          resetTradeState();
         }
       }
     };
@@ -10417,11 +10384,17 @@ summary.textContent = topSafeDigit
     higherlower: { history: [], expectancy: 0, winRate: 0, pausedUntil: 0, lastQuality: 0 },
     risefall: { history: [], expectancy: 0, winRate: 0, pausedUntil: 0, lastQuality: 0 },
     multiplier: { history: [], expectancy: 0, winRate: 0, pausedUntil: 0, lastQuality: 0 },
-    match: { history: [], expectancy: 0, winRate: 0, pausedUntil: 0, lastQuality: 0 }
+    match: { history: [], expectancy: 0, winRate: 0, pausedUntil: 0, lastQuality: 0 },
+    matches: { history: [], expectancy: 0, winRate: 0, pausedUntil: 0, lastQuality: 0 }
   };
 
   function updateModePerformance(mode, profit) {
-    const key = modePerformance[mode] ? mode : (mode === "over" || mode === "under" ? "underover" : mode === "even" || mode === "odd" ? "evenodd" : mode);
+    const normalized = String(mode || "").toLowerCase();
+    const key = modePerformance[normalized]
+      ? normalized
+      : (normalized === "matches" || normalized === "match" ? "match" :
+        normalized === "over" || normalized === "under" ? "underover" :
+        normalized === "even" || normalized === "odd" ? "evenodd" : normalized);
     if (!modePerformance[key]) return;
     const bucket = modePerformance[key];
     bucket.history.push(Number(profit || 0));
@@ -10437,18 +10410,21 @@ summary.textContent = topSafeDigit
   }
 
   function modePauseRemaining(mode) {
-    const key = modePerformance[mode] ? mode : mode;
+    const normalized = String(mode || "").toLowerCase();
+    const key = modePerformance[normalized] ? normalized : normalized === "matches" ? "match" : normalized;
     if (!modePerformance[key]) return 0;
     return Math.max(0, (modePerformance[key].pausedUntil || 0) - Date.now());
   }
 
   function getAdaptiveModeThreshold(mode) {
-    const base = mode === "risefall" ? 62 :
-      mode === "higherlower" ? 62 :
-      mode === "underover" ? 49 :
-      mode === "evenodd" ? 58 :
-      mode === "differ" ? 62 : 66;
-    const perf = modePerformance[mode];
+    const normalized = String(mode || "").toLowerCase();
+    const base = normalized === "risefall" ? 62 :
+      normalized === "higherlower" ? 62 :
+      normalized === "underover" ? 49 :
+      normalized === "evenodd" ? 58 :
+      normalized === "differ" ? 62 :
+      normalized === "matches" || normalized === "match" ? 14 : 66;
+    const perf = modePerformance[normalized] || modePerformance[normalized === "matches" ? "match" : normalized];
     if (!perf || perf.history.length < 5) return base;
     let adj = 0;
     if (perf.expectancy < 0) adj += 4;
@@ -11155,6 +11131,45 @@ summary.textContent = topSafeDigit
     if (perfPauseMs > 0) {
       signalLabel.textContent = (mode + " paused " + Math.ceil(perfPauseMs / 1000) + "s").toUpperCase();
       return null;
+    }
+
+    const modeKey = String(mode || "").toLowerCase();
+    const normalizedMode = modeKey === "matches" ? "match" : modeKey;
+
+    if (normalizedMode === "match") {
+      if (!history || history.length < 18) return null;
+      const pred = hybridPredictDigit(history, dsi);
+      if (!pred || pred.digit == null || !isFinite(pred.confidence)) return null;
+
+      const recent = history.slice(-20);
+      const last = history[history.length - 1];
+      const digitCounts = Array(10).fill(0);
+      recent.forEach((d) => { if (Number.isInteger(d) && d >= 0 && d <= 9) digitCounts[d]++; });
+      const hotDigit = digitCounts.indexOf(Math.max(...digitCounts));
+      const hotPull = Math.max(0, digitCounts[hotDigit] - Math.max(1, Math.round(recent.length / 8)));
+      const momentumBoost = Math.abs(last - hotDigit) <= 2 ? 0.05 : 0;
+      const recentPressure = Math.max(0, Math.min(0.18, hotPull / Math.max(1, recent.length)));
+      const confidenceRaw = Math.max(0.14, Math.min(0.96, pred.confidence + recentPressure + momentumBoost));
+      const confidence = Math.max(0.20, Math.min(0.90, confidenceRaw));
+
+      const threshold = getAdaptiveModeThreshold("match");
+      if (confidence * 100 < threshold) {
+        return null;
+      }
+
+      const decision = {
+        contract_type: "DIGITMATCH",
+        barrier: String(pred.digit),
+        duration: 1,
+        duration_unit: "t",
+        mode: "match",
+        confidence,
+        qualityScore: Math.round(Math.max(20, Math.min(95, confidence * 100 + (recentPressure * 100)))),
+        edgeScore: confidence,
+        setup: "hybrid-match",
+        reason: `Match Hybrid → digit ${pred.digit} • conf ${confidence.toFixed(2)} • pressure ${recentPressure.toFixed(2)} • momentum ${momentumBoost.toFixed(2)}`
+      };
+      return decision;
     }
 
     if (mode === "multiplier") {
@@ -12562,36 +12577,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
 
 <script>
-/* === TP OBSERVER (NO BACKEND CHANGES REQUIRED) === */
-let tpAlreadyTriggered = false;
-
-function initTPObserver() {
-  const observer = new MutationObserver(() => {
-    if (tpAlreadyTriggered) return;
-
-    const pageText = document.body.innerText || "";
-    if (pageText.includes("TP reached") || pageText.includes("TP Hit")) {
-      tpAlreadyTriggered = true;
-
-      const profit = window.sessionProfit || 0;
-      const totalTrades = window.totalTrades || 0;
-      const wins = window.winningTrades || 0;
-      const winRate = totalTrades ? ((wins / totalTrades) * 100).toFixed(1) : 0;
-
-      if (typeof showTPPopup === "function") {
-        showTPPopup(profit, winRate, totalTrades);
-      }
-    }
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    characterData: true
-  });
-}
-
-document.addEventListener("DOMContentLoaded", initTPObserver);
+/* === TP OBSERVER: disabled to stop repeated popups after dismissal === */
 </script>
 
 
@@ -14893,7 +14879,16 @@ body::before {
     try {
       var active = document.querySelector('.contract-tab.active');
       var mode = active && active.getAttribute('data-mode');
-      var map = {differ:'DIFFER', underover:'UNDER/OVER', evenodd:'EVEN/ODD', higherlower:'H&L', risefall:'CALL/PUT', multiplier:'MULTI'};
+      var map = {
+        differ:'DIFFER',
+        underover:'UNDER/OVER',
+        evenodd:'EVEN/ODD',
+        higherlower:'H&L',
+        risefall:'CALL/PUT',
+        multiplier:'MULTI',
+        match:'MATCH',
+        matches:'MATCH'
+      };
       return map[mode] || (mode ? mode.toUpperCase() : 'LIVE');
     } catch(e){ return 'LIVE'; }
   }
@@ -14981,11 +14976,14 @@ body::before {
     document.body.appendChild(t);
     setTimeout(function(){ t.remove(); }, 3200);
   }
+  var tpDismissed = false;
+
   function closeModal(){
     var modal = document.getElementById('tpModal');
     if (!modal) return;
     modal.classList.remove('active','fg-tp-active');
     modal.setAttribute('aria-hidden','true');
+    tpDismissed = true;
   }
 
   window.fgShowAnimatedTPHit = function(profit, winRate, tradeCount){
@@ -14996,6 +14994,8 @@ body::before {
     var trades = Math.max(Number(tradeCount || 0), Math.round(winsVal + lossesVal));
     var wr = winRate || moneyValue(text('winRateLabel')) || (trades ? Math.round((winsVal / trades) * 100) : 0);
     var key = profitVal.toFixed(2) + '|' + trades + '|' + Math.round(wr);
+
+    if (tpDismissed) return;
 
     // Prevent duplicate popups from the observer + direct TP trigger firing together.
     if (key === lastShownKey && now - lastShownAt < 5000) return;
@@ -15049,20 +15049,7 @@ body::before {
     if (e.key === 'Escape') closeModal();
   });
 
-  // Fallback watcher: catches TP text changes if another function stops the session.
-  var fallbackArmed = false;
-  function armFallback(){
-    if (fallbackArmed || !document.body) return;
-    fallbackArmed = true;
-    var obs = new MutationObserver(function(){
-      var sig = text('signalLabel') + ' ' + text('signalLabel2') + ' ' + text('activityText');
-      if (/TP reached|TP HIT|Take Profit/i.test(sig)) {
-        window.fgShowAnimatedTPHit(moneyValue(text('netProfitLabel')), null, moneyValue(text('winsLabel')) + moneyValue(text('lossesLabel')));
-      }
-    });
-    obs.observe(document.body, {childList:true, subtree:true, characterData:true});
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', armFallback); else armFallback();
+  // Fallback watcher disabled to respect the close/dismissal guard.
 })();
 </script>
 
@@ -15807,36 +15794,21 @@ function fgCalcAutoTpSl(){
 
 function fgApplyAutoTpSl(force){
   if (!tpInput || !slInput) return;
-  const auto = fgCalcAutoTpSl();
-  fgLastAutoRisk = auto;
-  if (force || !fgTpSlManuallyEdited || !tpInput.value || !slInput.value) {
-    tpInput.value = auto.tp.toFixed(2);
-    slInput.value = auto.sl.toFixed(2);
-  }
   try {
     const tpLbl = tpInput.closest('.input-row') && tpInput.closest('.input-row').querySelector('.input-label span');
     const slLbl = slInput.closest('.input-row') && slInput.closest('.input-row').querySelector('.input-label span');
-    if (tpLbl) tpLbl.textContent = `Auto target • ~${auto.winsNeeded || auto.targetWins || 0} wins`;
-    if (slLbl) slLbl.textContent = `Auto protection • ${auto.lossesAllowed || auto.maxLossesAllowed || 0}-loss cap`;
+    if (tpLbl) tpLbl.textContent = 'Manual target';
+    if (slLbl) slLbl.textContent = 'Manual protection';
   } catch(e) {}
   if (phase2HintBox) {
-    const wins = auto.winsNeeded ? ` • ~${auto.winsNeeded} wins target` : '';
-    const losses = auto.lossesAllowed ? ` • ~${auto.lossesAllowed} losses max` : '';
-    phase2HintBox.textContent = `YskellAI auto TP/SL active: ${auto.mode.toUpperCase()} • TP $${auto.tp.toFixed(2)} • SL $${auto.sl.toFixed(2)}${wins}${losses}.`;
+    phase2HintBox.textContent = 'Manual TP/SL active: custom session risk targets are now user-controlled.';
   }
 }
 
 function fgWireAutoTpSl(){
-  if (tpInput) tpInput.addEventListener('input', () => { fgTpSlManuallyEdited = true; });
-  if (slInput) slInput.addEventListener('input', () => { fgTpSlManuallyEdited = true; });
-  if (profitModeSelect) profitModeSelect.addEventListener('change', () => setTimeout(() => fgApplyAutoTpSl(true), 0));
-  if (sessionPresetSelect) sessionPresetSelect.addEventListener('change', () => setTimeout(() => fgApplyAutoTpSl(true), 0));
-  if (stakeInput) stakeInput.addEventListener('change', () => setTimeout(() => fgApplyAutoTpSl(true), 0));
-  if (useUltraStakeToggle) useUltraStakeToggle.addEventListener('change', () => setTimeout(() => fgApplyAutoTpSl(true), 0));
-  if (symbolInput) symbolInput.addEventListener('change', () => setTimeout(() => fgApplyAutoTpSl(true), 0));
-  document.querySelectorAll('.contract-tab').forEach(btn => {
-    btn.addEventListener('click', () => setTimeout(() => fgApplyAutoTpSl(true), 0));
-  });
+  // Manual TP/SL remains user-driven. Do not auto-push or override the field values.
+  if (tpInput) tpInput.setAttribute('data-manual-only', '1');
+  if (slInput) slInput.setAttribute('data-manual-only', '1');
 }
 
 function fgGetSequentialAiDigit(history, state){
@@ -15953,6 +15925,7 @@ const fgOriginalResetSession = typeof resetSession === 'function' ? resetSession
 resetSession = function(){
   if (fgOriginalResetSession) fgOriginalResetSession();
   fgTpSlManuallyEdited = false;
+  if (typeof tpDismissed !== 'undefined') tpDismissed = false;
   setTimeout(() => fgApplyAutoTpSl(true), 0);
 };
 
