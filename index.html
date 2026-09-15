@@ -334,6 +334,56 @@ input, textarea, select {
     .license-card .login-title { margin-top: 2px; }
     .license-contact { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; margin-top: 9px; padding: 9px 12px; border: 1px solid rgba(14,165,233,.3); border-radius: 12px; background: rgba(14,165,233,.08); color: #0369a1; font-size: 12px; font-weight: 700; transition: background .15s ease, transform .15s ease; }
     .license-contact:hover { background: rgba(14,165,233,.15); transform: translateY(-1px); }
+    .pricing-trigger { display: block; width: 100%; margin-top: 10px; padding: 9px 12px; border: 1px solid rgba(228,184,74,.34); border-radius: 12px; background: rgba(228,184,74,.10); color: #f0d88a; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s ease, transform .15s ease, box-shadow .15s ease; }
+    .pricing-trigger:hover { background: rgba(228,184,74,.18); box-shadow: 0 8px 20px rgba(228,184,74,.12); transform: translateY(-1px); }
+    .pricing-overlay { position: fixed; inset: 0; z-index: 10010; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(7,10,15,.62); backdrop-filter: blur(18px) saturate(140%); }
+    .pricing-overlay.active { display: flex; animation: pricingFadeIn .2s ease-out; }
+    .pricing-modal { position: relative; width: min(500px, 100%); overflow: hidden; padding: 12px 12px 9px; border: 1px solid rgba(228,184,74,.26); border-radius: 15px; background: linear-gradient(145deg, rgba(20,25,32,.84), rgba(10,15,21,.88)); box-shadow: 0 28px 80px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.04), 0 0 0 1px rgba(228,184,74,.08); backdrop-filter: blur(22px) saturate(135%); -webkit-backdrop-filter: blur(22px) saturate(135%); animation: pricingRiseIn .24s ease-out; }
+    .pricing-modal::before { content: ""; position: absolute; inset: 0 0 auto; height: 6px; background: linear-gradient(90deg, #8a5d12, #f0cc68, #8a5d12); }
+    .pricing-modal::after { content: ""; position: absolute; inset: -18% auto auto -10%; width: 42%; height: 130%; background: radial-gradient(circle, rgba(240,204,104,.18), transparent 65%); pointer-events: none; filter: blur(26px); animation: pricingGlow 5s ease-in-out infinite alternate; }
+    .pricing-head { margin-bottom: 5px; }
+    .pricing-kicker { margin: 0 0 8px; color: #f0cc68; font-size: 10px; font-weight: 800; letter-spacing: .16em; text-align: center; text-transform: uppercase; }
+    .pricing-modal h2 { margin: 0; color: #edf1f5; font-size: clamp(17px, 2vw, 21px); letter-spacing: -.04em; text-align: center; }
+    .pricing-modal p { margin: 4px 0 0; color: #9aa6b2; font-size: 10px; text-align: center; }
+    .pricing-feature-strip { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; justify-content: center; margin: 5px 0 7px; }
+    .pricing-feature-strip span { padding: 7px 11px; border: 1px solid rgba(228,184,74,.22); border-radius: 999px; background: rgba(255,255,255,.03); color: #d7dfe8; font-size: 11px; font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); animation: pricingTagFloat 4.6s ease-in-out infinite; }
+    .pricing-feature-strip span:nth-child(2) { animation-delay: .5s; }
+    .pricing-feature-strip span:nth-child(3) { animation-delay: 1s; }
+    .pricing-feature-strip span:nth-child(4) { animation-delay: 1.5s; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 4px; }
+    .pricing-card { position: relative; display: flex; flex-direction: column; min-height: 100%; padding: 8px 7px 7px; border: 1px solid rgba(148,163,184,.18); border-radius: 10px; background: linear-gradient(145deg, rgba(27,33,42,.72), rgba(11,16,23,.8)); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 16px 32px rgba(0,0,0,.16); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, filter .18s ease; }
+    .pricing-card:hover { transform: translateY(-3px) scale(1.01); border-color: rgba(228,184,74,.35); box-shadow: 0 18px 32px rgba(0,0,0,.22), 0 0 0 1px rgba(228,184,74,.08); }
+    .pricing-card.featured { border-color: rgba(228,184,74,.52); background: linear-gradient(180deg, rgba(33,27,16,.92), rgba(17,22,29,.88)); box-shadow: 0 18px 36px rgba(228,184,74,.10), inset 0 1px 0 rgba(255,255,255,.05); }
+    .pricing-card.featured::before { content: "Best value"; position: absolute; top: -11px; left: 18px; padding: 5px 10px; border-radius: 999px; background: linear-gradient(135deg, #d4af37, #b8860b); color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; box-shadow: 0 8px 18px rgba(212,175,55,.35); }
+    .pricing-card-header { display: flex; align-items: start; justify-content: space-between; gap: 3px; margin-bottom: 5px; }
+    .pricing-tier { display: block; color: #edf1f5; font-size: 11px; font-weight: 800; }
+    .pricing-suffix { display: block; margin-top: 3px; color: #9aa6b2; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .pricing-badge { padding: 5px 8px; border: 1px solid rgba(228,184,74,.26); border-radius: 999px; background: rgba(228,184,74,.10); color: #f0d88a; font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .pricing-price { display: flex; align-items: baseline; gap: 3px; margin: 0 0 3px; color: #f8fafc; font-size: clamp(19px, 2.1vw, 24px); font-weight: 900; letter-spacing: -.05em; text-shadow: 0 0 24px rgba(228,184,74,.12); }
+    .pricing-price span { color: #9aa6b2; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .pricing-meta { color: #c6cfda; font-size: 11px; font-weight: 700; }
+    .pricing-bullets { list-style: none; margin: 6px 0 7px; padding: 0; display: grid; gap: 2px; }
+    .pricing-bullets li { position: relative; padding-left: 12px; color: #dfe7ef; font-size: 9px; line-height: 1.25; }
+    .pricing-bullets li::before { content: "✓"; position: absolute; left: 0; top: 0; color: #f0cc68; font-weight: 900; }
+    .pricing-select { margin-top: auto; width: 100%; padding: 8px 8px; border: 0; border-radius: 9px; background: linear-gradient(135deg, #1e2b38, #0c1118); color: #edf1f5; font-size: 10px; font-weight: 800; letter-spacing: .04em; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, filter .15s ease; }
+    .pricing-select:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 10px 20px rgba(15,23,42,.22); }
+    .pricing-select:active { transform: translateY(0) scale(.99); }
+    .pricing-card.featured .pricing-select { background: linear-gradient(135deg, #8a5d12, #e4b84a); color: #17120a; }
+    .pricing-card.featured .pricing-select:hover { filter: brightness(1.04); }
+    .pricing-value { margin: 5px 0 3px; padding: 5px 7px; border-radius: 7px; background: rgba(228,184,74,.08); border: 1px solid rgba(228,184,74,.18); color: #dfe7ef; font-size: 9px; text-align: center; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+    .pricing-value strong { color: #f0d88a; }
+    .pricing-dismiss { position: absolute; top: 17px; right: 17px; width: 32px; height: 32px; border: 1px solid rgba(228,184,74,.28); border-radius: 50%; background: rgba(255,255,255,.04); color: #eaf1f8; font-size: 18px; line-height: 1; cursor: pointer; transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
+    .pricing-dismiss:hover { background: rgba(228,184,74,.12); color: #fff; transform: rotate(90deg); box-shadow: 0 0 20px rgba(228,184,74,.16); }
+    .pricing-close { display: block; width: 100%; margin-top: 5px; padding: 5px 8px; border: 0; border-radius: 7px; background: rgba(255,255,255,.04); border: 1px solid rgba(228,184,74,.18); color: #edf1f5; font-size: 9px; font-weight: 700; cursor: pointer; transition: background .15s ease, transform .15s ease, box-shadow .15s ease; }
+    .pricing-close:hover { background: rgba(228,184,74,.12); transform: translateY(-1px); box-shadow: 0 10px 20px rgba(228,184,74,.08); }
+    .pricing-footer-note { margin-top: 12px; color: #9aa6b2; font-size: 11px; text-align: center; }
+    @keyframes pricingFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pricingRiseIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes pricingGlow { from { transform: translateX(-8%) translateY(0px); opacity: .35; } to { transform: translateX(6%) translateY(14px); opacity: .6; } }
+    @keyframes pricingTagFloat { 0%, 100% { transform: translateY(0); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); } 50% { transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 18px rgba(228,184,74,.08); } }
+    @media (min-width: 761px) { .pricing-modal { width: min(560px, calc(100vw - 40px)); } .pricing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 760px) { .pricing-overlay { align-items: flex-start; padding: 12px; overflow-y: auto; } .pricing-modal { width: min(100%, 390px); margin: auto; padding: 16px 14px 12px; border-radius: 16px; } .pricing-head { margin-bottom: 10px; } .pricing-modal h2 { font-size: 21px; } .pricing-modal p { font-size: 11px; } .pricing-feature-strip { gap: 5px; margin: 8px 0 12px; } .pricing-grid { grid-template-columns: 1fr; gap: 8px; } .pricing-card { padding: 12px; border-radius: 12px; } .pricing-card-header { margin-bottom: 8px; } .pricing-tier { font-size: 14px; } .pricing-price { font-size: 27px; } .pricing-meta, .pricing-bullets li { font-size: 11px; } .pricing-bullets { margin: 9px 0 11px; gap: 4px; } .pricing-select { padding: 9px 10px; font-size: 11px; } .pricing-value { margin-top: 10px; padding: 8px 10px; font-size: 10px; } .pricing-close { margin-top: 8px; padding: 7px 10px; font-size: 10px; } .pricing-footer-note { font-size: 10px; line-height: 1.35; } }
+    @media (max-width: 480px) { .pricing-overlay { padding: 8px; } .pricing-modal { width: 100%; padding: 14px 11px 10px; border-radius: 14px; } .pricing-modal h2 { font-size: 19px; } .pricing-card { padding: 10px; } }
     .license-input { border-radius: 12px; text-transform: uppercase; letter-spacing: .08em; }
     .license-hint { margin: 12px 0 0; color: #64748b; font-size: 11px; text-align: center; }
     .admin-tools-grid { display: grid; grid-template-columns: minmax(0, 1fr) 150px 180px; gap: 10px; align-items: end; }
@@ -4229,8 +4279,84 @@ body::before {
     <button class="login-btn" type="submit">Unlock terminal</button>
     <div class="login-error" id="licenseLoginError" role="alert"></div>
     <a class="license-contact" href="https://t.me/Yskell" target="_blank" rel="noopener noreferrer">✈ Contact Yskell on Telegram</a>
+    <button class="pricing-trigger" id="pricingTrigger" type="button">View pricing</button>
     <p class="license-hint">Keys expire according to the plan selected by the administrator.</p>
   </form>
+</div>
+
+<div class="pricing-overlay" id="pricingOverlay" aria-hidden="true">
+  <div class="pricing-modal" role="dialog" aria-modal="true" aria-labelledby="pricingTitle">
+    <button class="pricing-dismiss" id="pricingDismiss" type="button" aria-label="Close pricing popup">&times;</button>
+    <div class="pricing-head">
+      <div class="pricing-kicker">Private terminal access</div>
+      <h2 id="pricingTitle">Choose your access plan</h2>
+      <p>Transparent pricing for traders who want performance, clarity, and speed.</p>
+    </div>
+    <div class="pricing-feature-strip" aria-label="Included features">
+      <span>Live signal tools</span>
+      <span>Fast execution</span>
+      <span>Private access</span>
+      <span>Priority support</span>
+    </div>
+    <div class="pricing-grid">
+      <article class="pricing-card">
+        <div class="pricing-card-header">
+          <div>
+            <span class="pricing-tier">1 day</span>
+            <span class="pricing-suffix">Quick trial</span>
+          </div>
+          <span class="pricing-badge">Test drive</span>
+        </div>
+        <div class="pricing-price">$20 <span>USD</span></div>
+        <div class="pricing-meta">Perfect for a focused trading session.</div>
+        <ul class="pricing-bullets">
+          <li>Full terminal access</li>
+          <li>Core market intelligence</li>
+          <li>Ideal for short-term testing</li>
+        </ul>
+        <button class="pricing-select" type="button">Choose 1 day</button>
+      </article>
+
+      <article class="pricing-card">
+        <div class="pricing-card-header">
+          <div>
+            <span class="pricing-tier">1 month</span>
+            <span class="pricing-suffix">Most popular</span>
+          </div>
+          <span class="pricing-badge">Flexible</span>
+        </div>
+        <div class="pricing-price">$100 <span>USD</span></div>
+        <div class="pricing-meta">Built for consistent use and serious momentum.</div>
+        <ul class="pricing-bullets">
+          <li>Everything in the terminal</li>
+          <li>Most flexible monthly access</li>
+          <li>Great for short-to-mid term use</li>
+        </ul>
+        <button class="pricing-select" type="button">Choose 1 month</button>
+      </article>
+
+      <article class="pricing-card featured">
+        <div class="pricing-card-header">
+          <div>
+            <span class="pricing-tier">Lifetime</span>
+            <span class="pricing-suffix">Unlimited</span>
+          </div>
+          <span class="pricing-badge">Best value</span>
+        </div>
+        <div class="pricing-price">$300 <span>USD</span></div>
+        <div class="pricing-meta">Best overall value for long-term traders.</div>
+        <ul class="pricing-bullets">
+          <li>Permanent private access</li>
+          <li>Lowest cost per month</li>
+          <li>Ideal for committed users</li>
+        </ul>
+        <button class="pricing-select" type="button">Choose lifetime</button>
+      </article>
+    </div>
+    <div class="pricing-value">Best value: <strong>Lifetime access</strong> saves the most over time and locks in your edge.</div>
+    <div class="pricing-footer-note">No refunds after purchase. Need a custom setup or team access? Contact Yskell on Telegram.</div>
+    <button class="pricing-close" id="pricingClose" type="button">Close</button>
+  </div>
 </div>
 
 <!-- RISK DISCLOSURE GATE -->
@@ -5506,6 +5632,10 @@ body::before {
   const licenseLoginForm = document.getElementById("licenseLoginForm");
   const licenseKeyInput = document.getElementById("licenseKeyInput");
   const licenseLoginError = document.getElementById("licenseLoginError");
+  const pricingTrigger = document.getElementById("pricingTrigger");
+  const pricingOverlay = document.getElementById("pricingOverlay");
+  const pricingClose = document.getElementById("pricingClose");
+  const pricingDismiss = document.getElementById("pricingDismiss");
   const ADMIN_LICENSE_KEY = "YSKELL-ADMIN-2026";
   const LICENSE_API_URL = "/.netlify/functions/license-store";
   const LICENSE_LOCAL_KEY = "yskellai_license_records";
@@ -5764,6 +5894,27 @@ body::before {
 
     currentLicenseRecord = record;
     grantLicenseAccess(false);
+  });
+
+  function closePricingPopup() {
+    if (!pricingOverlay) return;
+    pricingOverlay.classList.remove("active");
+    pricingOverlay.setAttribute("aria-hidden", "true");
+    if (pricingTrigger) pricingTrigger.focus();
+  }
+
+  if (pricingTrigger && pricingOverlay) pricingTrigger.addEventListener("click", function() {
+    pricingOverlay.classList.add("active");
+    pricingOverlay.setAttribute("aria-hidden", "false");
+    if (pricingClose) pricingClose.focus();
+  });
+  if (pricingClose) pricingClose.addEventListener("click", closePricingPopup);
+  if (pricingDismiss) pricingDismiss.addEventListener("click", closePricingPopup);
+  if (pricingOverlay) pricingOverlay.addEventListener("click", function(event) {
+    if (event.target === pricingOverlay) closePricingPopup();
+  });
+  document.addEventListener("keydown", function(event) {
+    if (event.key === "Escape" && pricingOverlay && pricingOverlay.classList.contains("active")) closePricingPopup();
   });
 
   document.getElementById("generateLicenseBtn")?.addEventListener("click", async function() {
@@ -16924,128 +17075,4 @@ function fgSequentialUnderOverOnTick(tick){
   if (!symbol || !fgSeqUoState.histories.has(symbol)) return false;
   const d = fgSeqUoDigitFromTick(tick);
   if (d === null) return false;
-  const h = fgSeqUoState.histories.get(symbol);
-  h.push(d);
-  if (h.length > 120) h.shift();
-  const ss = fgSeqUoState.symbolState.get(symbol);
-  if (!ss) return true;
-  if (ss.open || Date.now() < ss.cooldownUntil) return true;
-  const decision = fgSeqUoDecisionFor(symbol, h);
-  if (decision) fgSeqUoSend(symbol, decision);
-  else if (Date.now() - fgSeqUoState.lastStatusAt > 1800) {
-    fgSeqUoState.lastStatusAt = Date.now();
-    const warmed = Array.from(fgSeqUoState.histories.values()).filter(x => x.length >= 36).length;
-    const open = Array.from(fgSeqUoState.symbolState.values()).filter(x => x.open).length;
-    fgSeqUoSetStatus(`U/O AUTO scanning ${fgSeqUoState.symbols.length} pairs • ${warmed} warmed • ${open} open • W${fgSeqUoState.wins} L${fgSeqUoState.losses}`);
-  }
-  return true;
-}
-
-function fgSequentialUnderOverOnResult(trade, pnl, won){
-  if (!fgSeqUoState || !trade) return;
-  const ss = fgSeqUoState.symbolState.get(trade.symbol);
-  if (ss) {
-    ss.open = false;
-    ss.results += 1;
-    ss.cooldownUntil = Date.now() + (won ? 700 : 1600);
-    if (won) { ss.wins += 1; ss.lossStreak = 0; }
-    else { ss.losses += 1; ss.lossStreak += 1; ss.cooldownUntil = Date.now() + (ss.lossStreak >= 2 ? 3500 : 1800); }
-  }
-  if (won) fgSeqUoState.wins += 1; else fgSeqUoState.losses += 1;
-  fgSeqUoState.pnl += Number(pnl || 0);
-  const open = Array.from(fgSeqUoState.symbolState.values()).filter(x => x.open).length;
-  fgSeqUoState.openCount = open;
-  fgSeqUoSetStatus(`U/O AUTO • ${trade.symbol} ${won ? 'WIN' : 'LOSS'} ${Number(pnl||0)>=0?'+':''}$${Number(pnl||0).toFixed(2)} • W${fgSeqUoState.wins} L${fgSeqUoState.losses} • ${open} open • auto-run continues`);
-}
-
-function fgSequentialUnderOverOnError(ctx, message){
-  if (!ctx) return;
-  if (fgSeqUoState) {
-    const ss = fgSeqUoState.symbolState.get(ctx.symbol);
-    if (ss) { ss.open = false; ss.cooldownUntil = Date.now() + 8000; ss.errors += 1; }
-  }
-  fgSeqUoSetStatus(`U/O AUTO skipped ${ctx.symbol}: ${message} • scanning continues on other pairs.`);
-}
-
-function fgSequentialUnderOverStart(){
-  if (!isAuthorized || !ws || ws.readyState !== 1) { fgSeqUoSetStatus('Connect to Deriv first.'); fgSeqUoUpdateUi(); return; }
-  if (isRunning) { fgSeqUoSetStatus('Stop the main bot before starting Sequential Under/Over AUTO.'); return; }
-  if (currentTrade) { fgSeqUoSetStatus('Wait for the current main trade to finish first.'); return; }
-  if (sequentialState && sequentialState.active) { fgSeqUoSetStatus('Stop Sequential DIFFER first.'); return; }
-  if (fgSequentialUnderOverIsActive()) return;
-  try { updateContractMode('underover'); } catch(e) {}
-
-  const symbols = fgSeqUoAllSymbols();
-  if (!symbols.length) { fgSeqUoSetStatus('No pairs are available in the multi-pair panel.'); return; }
-  try {
-    const wrap = document.getElementById('burstSymbols');
-    if (wrap) Array.from(wrap.querySelectorAll('input[type="checkbox"]')).forEach(el => { el.checked = true; });
-  } catch(e) {}
-
-  fgSeqUoState = {
-    active:true, symbols, histories:new Map(), symbolState:new Map(), subscriptions:new Map(),
-    wins:0, losses:0, pnl:0, sent:0, openCount:0, lastStatusAt:0, startedAt:Date.now()
-  };
-  symbols.forEach(symbol => {
-    fgSeqUoState.histories.set(symbol, []);
-    fgSeqUoState.symbolState.set(symbol, { open:false, entries:0, results:0, wins:0, losses:0, errors:0, lossStreak:0, cooldownUntil:0, lastSignature:'', lastDecisionAt:0, lastTradeAt:0 });
-    safeSend({ ticks:symbol, subscribe:1, passthrough:{ mode:'seq_uo_tick', symbol } });
-  });
-  if (activityModePill) activityModePill.textContent = 'U/O AUTO';
-  fgSeqUoSetStatus(`Sequential Under/Over AUTO started • scanning ${symbols.length} pairs independently • 1 tick • no forced entries.`);
-  try { showNotification('✅ Sequential Under/Over AUTO activated.', 'good'); } catch(e) {}
-  fgSeqUoUpdateUi();
-}
-
-function fgSequentialUnderOverStop(reason, notify=true){
-  const wasActive = fgSequentialUnderOverIsActive();
-  const state = fgSeqUoState;
-  fgSeqUoState = null;
-  if (state && state.subscriptions) {
-    state.subscriptions.forEach(id => { try { if (id) forgetSub(id); } catch(e) {} });
-  }
-  // Safety-clean every multi-pair tick stream, then restore the normal single-symbol feed.
-  try { safeSend({ forget_all: "ticks" }); } catch(e) {}
-  setTimeout(function(){
-    try { if (isAuthorized && symbolInput) resubscribeTicks(symbolInput.value); } catch(e) {}
-  }, 80);
-  if (activityModePill && !isRunning) activityModePill.textContent = 'SCANNING';
-  const msg = reason || 'Sequential Under/Over AUTO stopped.';
-  const box = document.getElementById('seqUoStatusBox');
-  if (box) box.textContent = msg;
-  if (wasActive && notify) { try { showNotification('🛑 ' + msg, 'info'); } catch(e) {} }
-  fgSeqUoUpdateUi();
-}
-
-// Capture subscription IDs for the all-pair tick streams from each tick response.
-const fgSeqUoOriginalOnTick = fgSequentialUnderOverOnTick;
-fgSequentialUnderOverOnTick = function(tick){
-  if (fgSeqUoState && tick && tick.symbol && tick.subscription && tick.subscription.id) {
-    fgSeqUoState.subscriptions.set(String(tick.symbol), tick.subscription.id);
-  }
-  return fgSeqUoOriginalOnTick(tick);
-};
-
-const fgSeqUoOriginalUpdateSequentialUi = typeof updateSequentialUi === 'function' ? updateSequentialUi : null;
-if (fgSeqUoOriginalUpdateSequentialUi) {
-  updateSequentialUi = function(){
-    fgSeqUoOriginalUpdateSequentialUi();
-    fgSeqUoUpdateUi();
-  };
-}
-
-document.addEventListener('DOMContentLoaded', function(){
-  const start = document.getElementById('seqUoAutoBtn');
-  const stop = document.getElementById('seqUoStopBtn');
-  if (start) start.onclick = fgSequentialUnderOverStart;
-  if (stop) stop.onclick = function(){ fgSequentialUnderOverStop('Sequential Under/Over AUTO stopped manually.'); };
-  fgSeqUoUpdateUi();
-});
-setTimeout(function(){
-  const start = document.getElementById('seqUoAutoBtn');
-  const stop = document.getElementById('seqUoStopBtn');
-  if (start) start.onclick = fgSequentialUnderOverStart;
-  if (stop) stop.onclick = function(){ fgSequentialUnderOverStop('Sequential Under/Over AUTO stopped manually.'); };
-  fgSeqUoUpdateUi();
-}, 180);
-</script>
+ 
