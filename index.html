@@ -336,7 +336,7 @@ input, textarea, select {
     .license-contact:hover { background: rgba(14,165,233,.15); transform: translateY(-1px); }
     .pricing-trigger { display: block; width: 100%; margin-top: 10px; padding: 9px 12px; border: 1px solid rgba(228,184,74,.34); border-radius: 12px; background: rgba(228,184,74,.10); color: #f0d88a; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s ease, transform .15s ease, box-shadow .15s ease; }
     .pricing-trigger:hover { background: rgba(228,184,74,.18); box-shadow: 0 8px 20px rgba(228,184,74,.12); transform: translateY(-1px); }
-    .pricing-overlay { position: fixed; inset: 0; z-index: 10010; display: none; align-items: center; justify-content: center; overflow-y: auto; padding: 24px 20px; background: rgba(7,10,15,.62); backdrop-filter: blur(18px) saturate(140%); }
+    .pricing-overlay { position: fixed; inset: 0; z-index: 10010; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(7,10,15,.62); backdrop-filter: blur(18px) saturate(140%); }
     .pricing-overlay.active { display: flex; animation: pricingFadeIn .2s ease-out; }
     .pricing-modal { position: relative; width: min(500px, 100%); overflow: hidden; padding: 12px 12px 9px; border: 1px solid rgba(228,184,74,.26); border-radius: 15px; background: linear-gradient(145deg, rgba(20,25,32,.84), rgba(10,15,21,.88)); box-shadow: 0 28px 80px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.04), 0 0 0 1px rgba(228,184,74,.08); backdrop-filter: blur(22px) saturate(135%); -webkit-backdrop-filter: blur(22px) saturate(135%); animation: pricingRiseIn .24s ease-out; }
     .pricing-modal::before { content: ""; position: absolute; inset: 0 0 auto; height: 6px; background: linear-gradient(90deg, #8a5d12, #f0cc68, #8a5d12); }
@@ -4302,7 +4302,7 @@ body::before {
       <article class="pricing-card">
         <div class="pricing-card-header">
           <div>
-            <span class="pricing-tier">1 day</span>
+            <span class="pricing-tier">3 days</span>
             <span class="pricing-suffix">Quick trial</span>
           </div>
           <span class="pricing-badge">Test drive</span>
@@ -4314,7 +4314,6 @@ body::before {
           <li>Core market intelligence</li>
           <li>Ideal for short-term testing</li>
         </ul>
-        <button class="pricing-select" type="button">Choose 1 day</button>
       </article>
 
       <article class="pricing-card">
@@ -4332,7 +4331,6 @@ body::before {
           <li>Most flexible monthly access</li>
           <li>Great for short-to-mid term use</li>
         </ul>
-        <button class="pricing-select" type="button">Choose 1 month</button>
       </article>
 
       <article class="pricing-card featured">
@@ -4350,7 +4348,6 @@ body::before {
           <li>Lowest cost per month</li>
           <li>Ideal for committed users</li>
         </ul>
-        <button class="pricing-select" type="button">Choose lifetime</button>
       </article>
     </div>
     <div class="pricing-value">Best value: <strong>Lifetime access</strong> saves the most over time and locks in your edge.</div>
@@ -4364,7 +4361,7 @@ body::before {
   <div class="risk-disclosure-card" role="dialog" aria-modal="true" aria-labelledby="riskDisclosureTitle" aria-describedby="riskDisclosureBody">
     <div class="risk-disclosure-head">
       <div>
-        <div class="risk-disclosure-kicker">Allicouture Digital Empire</div>
+        <div class="risk-disclosure-kicker">YskellAI Empire</div>
         <h2 class="risk-disclosure-title" id="riskDisclosureTitle">Risk Disclosure & User Agreement</h2>
       </div>
       <div class="risk-disclosure-badge">Required</div>
@@ -4381,11 +4378,11 @@ body::before {
         <li>Market conditions can change quickly, and automated systems can experience losses, delays, connection issues, API errors, or execution problems.</li>
         <li>You should only trade with funds you can afford to lose and test carefully using a demo account before using real funds.</li>
       </ul>
-      <p><strong>Liability notice:</strong> Allicouture Digital Empire, its owners, developers, support team, and affiliates are not liable for trading losses, missed profits, account drawdown, technical failures, user error, broker/API changes, or decisions made based on this system.</p>
+      <p><strong>Liability notice:</strong> YskellAI Empire, its owners, developers, support team, and affiliates are not liable for trading losses, missed profits, account drawdown, technical failures, user error, broker/API changes, or decisions made based on this system.</p>
       <p>By agreeing, you confirm that you understand the risks and accept full responsibility for your trading activity.</p>
       <label class="risk-disclosure-check" for="riskAgreeCheck">
         <input type="checkbox" id="riskAgreeCheck" />
-        <span>I have read and understand this risk disclosure. I agree that Allicouture Digital Empire is not responsible for any trading losses or financial decisions I make.</span>
+        <span>I have read and understand this risk disclosure. I agree that YskellAI Empire is not responsible for any trading losses or financial decisions I make.</span>
       </label>
     </div>
     <div class="risk-disclosure-actions">
@@ -5495,6 +5492,7 @@ body::before {
   <div class="note-card"><div class="note-card-title">📈 H&L Optimizer</div><div class="note-card-body">Use Pair Optimizer with Profit Gate ON. Default barrier +0.12. Works best on trending sessions. Higher pays more on strong moves.</div></div>
   <div class="note-card"><div class="note-card-title">⚡ Even / Odd</div><div class="note-card-body">Parity AI V2: 1-tick model reads recent EVEN/ODD balance, parity transitions, exact-digit-to-parity transitions, two-parity sequences, and real parity streak behavior. It waits when the model views do not agree. Risk per trade ≤ 2% of balance.</div></div>
   <div class="note-card"><div class="note-card-title">🎯 Differ — OPTIONAL</div><div class="note-card-body">Differ remains available as a secondary mode. Its sequential and burst tools are separate from the main Under/Over bot.</div></div>
+  <div class="note-card"><div class="note-card-title">🎯 Matches</div><div class="note-card-body">Matches wins when the last digit equals your selected digit. It has a low win rate but a high payout, so use tiny stakes, wait for a strong signal, and test on Demo first.</div></div>
   <div class="note-card"><div class="note-card-title">📞 Call / Put (RF)</div><div class="note-card-body">Trend-following mode. Sniper profile best for quality entries. 7-tick duration. Wait for quality score ≥ 65 before entry. Avoid choppy sessions.</div></div>
   <div class="note-card"><div class="note-card-title">⚠️ Risk Rules</div><div class="note-card-body">Never risk more than 5% per trade. Set a daily loss limit. After 3 consecutive losses, pause 10 minutes. Always test on demo first.</div></div>
 </div>
@@ -5522,9 +5520,8 @@ body::before {
     </label>
     <label class="login-label">Plan
       <select class="admin-select" id="adminKeyDuration">
-        <option value="day">1 day</option>
+        <option value="three_day">3 days</option>
         <option value="month">1 month</option>
-        <option value="year">1 year</option>
         <option value="lifetime">Lifetime</option>
       </select>
     </label>
@@ -5797,6 +5794,7 @@ body::before {
   }
 
   function licensePlanLabel(plan) {
+    if (plan === "three_day") return "3 days";
     if (plan === "day") return "1 day";
     if (plan === "month") return "1 month";
     if (plan === "year") return "1 year";
@@ -5808,6 +5806,7 @@ body::before {
     var expiry = new Date();
     if (plan === "year") expiry.setFullYear(expiry.getFullYear() + 1);
     else if (plan === "month") expiry.setMonth(expiry.getMonth() + 1);
+    else if (plan === "three_day") expiry.setDate(expiry.getDate() + 3);
     else expiry.setDate(expiry.getDate() + 1);
     return expiry.toISOString();
   }
@@ -5906,7 +5905,8 @@ body::before {
   if (pricingTrigger && pricingOverlay) pricingTrigger.addEventListener("click", function() {
     pricingOverlay.classList.add("active");
     pricingOverlay.setAttribute("aria-hidden", "false");
-    if (pricingClose) pricingClose.focus();
+    pricingOverlay.scrollTop = 0;
+    if (pricingClose) pricingClose.focus({ preventScroll: true });
   });
   if (pricingClose) pricingClose.addEventListener("click", closePricingPopup);
   if (pricingDismiss) pricingDismiss.addEventListener("click", closePricingPopup);
@@ -13915,7 +13915,7 @@ async function connectDerivUSD(api, token) {
     if(q.includes('profit')||q.includes('earn')||q.includes('make money'))
       return "📈 Better Process:\n\n• Start small and scale slowly\n• Learn the Under/Over main bot first\n• Let YskellAI wait for its quality filter instead of forcing entries\n• Use a daily loss limit and stop when it is hit\n• Avoid revenge trading\n\nPath: Demo → Under/Over on Vol 50 → review results → then decide whether to go live.";
     if(q.includes('yskellai')||q.includes('what is'))
-      return "❄️ YskellAI is an AI Deriv trading terminal by Allicouture Digital Empire.\n\nMain bot: Under/Over AI.\n\nOptional modes include Differ, Even/Odd, H&L, Call/Put and Multipliers, plus Sequential AI, RF Boost, Burst Mode, and me — Yskell Bot 🤖";
+      return "❄️ YskellAI is an AI Deriv trading terminal by YskellAI Empire.\n\nMain bot: Under/Over AI.\n\nOptional modes include Differ, Even/Odd, H&L, Call/Put and Multipliers, plus Sequential AI, RF Boost, Burst Mode, and me — Yskell Bot 🤖";
     var d=["🤖 Ask me about the Under/Over main bot, stakes, recovery, RF Boost, symbols, or connecting to Deriv!","❄️ Try: 'How does Under/Over work?' or 'What stake should I use?' or 'How does RF Boost work?'","💬 Ask me about any YskellAI feature, risk rules, or which symbols to use!"];
     return d[Math.floor(Math.random()*d.length)];
   }
@@ -16849,6 +16849,13 @@ setTimeout(() => {
       eg:"Stake <b>$10</b> → a win returns about <b>$10.90–$11.00</b> (≈ $0.90–$1.00 profit). One loss costs the full $10, so protect your streaks.",
       tip:"Best on Vol 25 / Vol 25 (1s) with a 1-tick duration. Let the Sequential AI rotate cold digits instead of repeating one."
     },
+    matches: {
+      icon:'🎯', name:'Matches', tag:'Low win-rate · high payout', tagBg:'rgba(239,68,68,0.16)', tagFg:'#fca5a5',
+      what:"You pick a digit (0–9). The trade wins only when the last digit of the price <b>matches</b> your selected digit.",
+      pay:"About a <b>10% chance to win</b>, with a high payout that is typically around <b>8–9× your stake</b>. Deriv shows the exact live quote before purchase.",
+      eg:"Stake <b>$1</b> on digit 7 → if the last digit is 7, the return may be around <b>$8–$10</b> depending on the live quote. Any other digit loses the stake.",
+      tip:"High variance mode. Use tiny stakes, wait for a confirmed hot-digit signal, and test on Demo before trading live."
+    },
     underover: {
       icon:'🔢', name:'Under / Over', tag:'Payout depends on barrier', tagBg:'rgba(212,175,55,0.15)', tagFg:'#60a5fa',
       what:"Pick a barrier digit. <b>Under</b> wins if the last digit lands below it; <b>Over</b> wins if it lands above it.",
@@ -17055,23 +17062,4 @@ function fgSeqUoSend(symbol, decision){
   ss.open = true;
   ss.lastTradeAt = Date.now();
   burstPendingByReq.set(req_id, {
-    kind: 'seq_uo', modeLabel: 'seq-underover', symbol, decision, stake, sentAt: Date.now(), stage: 'proposal'
-  });
-  safeSend({
-    req_id, proposal: 1, amount: stake, basis: 'stake',
-    contract_type: decision.contract_type, currency: 'USD', symbol,
-    duration: 1, duration_unit: 't', barrier: decision.barrier,
-    passthrough: { mode:'burst', kind:'seq_uo', symbol, req_id }
-  });
-  ss.entries += 1;
-  fgSeqUoState.sent += 1;
-  fgSeqUoSetStatus(`U/O AUTO • ${symbol} → ${decision.contract_type === 'DIGITOVER' ? 'OVER' : 'UNDER'} ${decision.barrier} • Q${decision.qualityScore} • 1 tick • ${fgSeqUoState.openCount + 1} active/requested`);
-  return true;
-}
-
-function fgSequentialUnderOverOnTick(tick){
-  if (!fgSequentialUnderOverIsActive() || !tick) return false;
-  const symbol = String(tick.symbol || '');
-  if (!symbol || !fgSeqUoState.histories.has(symbol)) return false;
-  const d = fgSeqUoDigitFromTick(tick);
-  if (d ==
+    kind: 'seq_uo', modeLabel: 'seq-underover', symbol, decision, stake, sentAt: Date.now
