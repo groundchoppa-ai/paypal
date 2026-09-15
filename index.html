@@ -9269,14 +9269,26 @@ if (currentTrade && currentTrade.false) {
             trackContractPerformance(currentTrade.mode, profit);
           }
 
-                  const maxLs = parseInt(maxLossStreakInput.value, 10) || 0;
+          const takeProfitLimit = Math.max(0, Number(tpInput && tpInput.value) || 0);
+          const stopLossLimit = Math.max(0, Number(slInput && slInput.value) || 0);
+          const maxLs = Math.max(0, parseInt(maxLossStreakInput && maxLossStreakInput.value, 10) || 0);
+          let riskStopReason = "";
 
-          if (maxLs && lossStreak >= maxLs) {
-            activityModePill.textContent = "RISK";
-            activityText.textContent = "Loss streak warning hit — YskellAI reduced aggression but keeps respecting custom TP / SL inputs.";
-            rfCooldownTicks = Math.max(rfCooldownTicks, 10);
+          if (takeProfitLimit > 0 && netProfit >= takeProfitLimit) {
+            riskStopReason = "Take Profit reached: +$" + netProfit.toFixed(2) + " / $" + takeProfitLimit.toFixed(2) + ".";
+          } else if (stopLossLimit > 0 && netProfit <= -stopLossLimit) {
+            riskStopReason = "Stop Loss reached: -$" + Math.abs(netProfit).toFixed(2) + " / $" + stopLossLimit.toFixed(2) + ".";
+          } else if (maxLs > 0 && lossStreak >= maxLs) {
+            riskStopReason = "Maximum loss streak reached: " + lossStreak + "/" + maxLs + ".";
           }
-          resetTradeState();
+
+          if (riskStopReason) {
+            resetTradeState();
+            try { endSessionMode(riskStopReason, false, true); } catch (e) {}
+            if (typeof hardStop === "function") hardStop(riskStopReason);
+          } else {
+            resetTradeState();
+          }
         }
       }
     };
@@ -17046,20 +17058,4 @@ function fgSeqUoDecisionFor(symbol, history){
 }
 
 function fgSeqUoSend(symbol, decision){
-  if (!fgSequentialUnderOverIsActive() || !decision || !isAuthorized || !ws || ws.readyState !== 1) return false;
-  const ss = fgSeqUoState.symbolState.get(symbol);
-  if (!ss || ss.open || Date.now() < ss.cooldownUntil) return false;
-
-  let stake = Number(getEffectiveBaseStake ? getEffectiveBaseStake() : (parseFloat(stakeInput && stakeInput.value) || 1));
-  try {
-    if (smartRiskEnabled && typeof applySmartRisk === 'function') {
-      stake = applySmartRisk(stake, lastDsi || 0, wins, lossStreak, netProfit, tradingProfile, decision);
-    }
-  } catch(e) {}
-  stake = Math.max(0.35, Number(stake.toFixed(2)));
-
-  const req_id = nextReqId();
-  ss.open = true;
-  ss.lastTradeAt = Date.now();
-  burstPendingByReq.set(req_id, {
-    kind: 'seq_uo', modeLabel: 'seq-underover', symbol, decision, stake, sentAt: Date.now
+  if (!fgSequentialUnderOverIsActive() || !decision || !isAuthorized || !ws || ws.readyS
