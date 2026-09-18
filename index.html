@@ -18,15 +18,6 @@
 <link rel="apple-touch-icon" href="https://emojicdn.elk.sh/👑?style=apple">
 
 <meta name="color-scheme" content="light"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-
-</script>
-<script>
-window.YSKELLAI_CONFIG = {
-  SUPABASE_URL: "https://ynkxvdugxibcqwlrnvyo.supabase.co",
-  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlua3h2ZHVneGliY3F3bHJudnlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyOTEyNDMsImV4cCI6MjA4ODg2NzI0M30.18PGBnnkk3EP-OWonfENYfx3Codo9spm6QSSOWI3I94"
-};
-</script>
 <style>
 
 /* ═══════════════════════════════════════
@@ -258,6 +249,7 @@ input, textarea, select {
     }
     .login-title span {
       background: linear-gradient(120deg, #d4af37, #b8860b);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -473,6 +465,7 @@ input, textarea, select {
 
     .neon-title {
       background: linear-gradient(120deg, #b8860b, #d4af37);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       text-shadow: none;
@@ -1278,11 +1271,6 @@ input, textarea, select {
     /* === YskellAI Tier UI === */
 
     /* PRO – Dark + Neon Blue */
-    body.tier-pro {}
-    body.tier-pro {}
-    body.tier-pro {}
-    body.tier-pro {}
-    body.tier-pro {}
 
     /* ELITE – White + Gold */
     body.tier-elite {
@@ -2282,6 +2270,14 @@ body { text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; 
 
 .shell-content{
   min-width: 0;
+}
+
+.shell-content > main{
+  max-height: calc(100vh - 36px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 6px;
 }
 
 /* Make existing header feel like a "top bar" inside the shell */
@@ -4732,7 +4728,7 @@ body::before {
 <button class="contract-tab active" data-mode="underover">Under / Over <span class="badge-preview">MAIN</span></button>
 <button class="contract-tab" data-mode="differ">Differ</button>
 <button class="contract-tab" data-mode="evenodd">Even / Odd</button>
-<button class="contract-tab" data-mode="matches">Matches</button>
+<button class="contract-tab" data-mode="matches">Hybrid</button>
 <button class="contract-tab" data-mode="higherlower" id="higherLowerTab">
                 Higher / Lower <span class="badge-preview" id="hlBadge">NEW</span>
 </button>
@@ -5492,7 +5488,7 @@ body::before {
   <div class="note-card"><div class="note-card-title">📈 H&L Optimizer</div><div class="note-card-body">Use Pair Optimizer with Profit Gate ON. Default barrier +0.12. Works best on trending sessions. Higher pays more on strong moves.</div></div>
   <div class="note-card"><div class="note-card-title">⚡ Even / Odd</div><div class="note-card-body">Parity AI V2: 1-tick model reads recent EVEN/ODD balance, parity transitions, exact-digit-to-parity transitions, two-parity sequences, and real parity streak behavior. It waits when the model views do not agree. Risk per trade ≤ 2% of balance.</div></div>
   <div class="note-card"><div class="note-card-title">🎯 Differ — OPTIONAL</div><div class="note-card-body">Differ remains available as a secondary mode. Its sequential and burst tools are separate from the main Under/Over bot.</div></div>
-  <div class="note-card"><div class="note-card-title">🎯 Matches</div><div class="note-card-body">Matches wins when the last digit equals your selected digit. It has a low win rate but a high payout, so use tiny stakes, wait for a strong signal, and test on Demo first.</div></div>
+  <div class="note-card"><div class="note-card-title">🎯 Hybrid</div><div class="note-card-body">Hybrid wins when the last digit equals your selected digit. It has a low win rate but a high payout, so use tiny stakes, wait for a strong signal, and test on Demo first.</div></div>
   <div class="note-card"><div class="note-card-title">📞 Call / Put (RF)</div><div class="note-card-body">Trend-following mode. Sniper profile best for quality entries. 7-tick duration. Wait for quality score ≥ 65 before entry. Avoid choppy sessions.</div></div>
   <div class="note-card"><div class="note-card-title">⚠️ Risk Rules</div><div class="note-card-body">Never risk more than 5% per trade. Set a daily loss limit. After 3 consecutive losses, pause 10 minutes. Always test on demo first.</div></div>
 </div>
@@ -6107,7 +6103,7 @@ body::before {
         }
       }
 
-      // Pull user email from Supabase session if available
+      // Pull user email if available
       try {
         if (window.fgCurrentUserEmail) {
           var em = window.fgCurrentUserEmail;
@@ -6166,8 +6162,10 @@ body::before {
       link.classList.add("nav-active");
       if (window.innerWidth <= 720) {
         const nav = link.parentElement;
-        if (target === "dashboard" && nav) nav.scrollLeft = 0;
-        else link.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+        if (nav) {
+          const left = target === "dashboard" ? 0 : Math.max(0, link.offsetLeft - nav.offsetLeft - 8);
+          nav.scrollTo({ left: left, behavior: "smooth" });
+        }
       }
       Object.keys(tabs).forEach((key) => {
         if (!tabs[key]) return;
@@ -13845,6 +13843,7 @@ async function connectDerivUSD(api, token) {
 
   btn.addEventListener('click',function(e){e.stopPropagation();open?hide():show();});
   xcl.addEventListener('click',function(e){e.stopPropagation();hide();});
+  win.addEventListener('click',function(e){e.stopPropagation();});
   document.addEventListener('click',function(e){if(open&&!win.contains(e.target)&&e.target!==btn)hide();});
 
   function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -13885,6 +13884,8 @@ async function connectDerivUSD(api, token) {
   function send(t){
     t=(t||inp.value).trim();
     if(!t)return;
+    open=true;
+    win.classList.add('on');
     inp.value='';inp.style.height='auto';
     chips.innerHTML='';
     user(t);showTyping();
@@ -14946,6 +14947,7 @@ body::before {
   padding: 2px;
   background: linear-gradient(120deg,#22c55e,#facc15,#daa520,#22c55e);
   background-size: 280% 280%;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -15271,6 +15273,12 @@ input:focus, select:focus, textarea:focus, .input:focus, .select:focus, .login-i
 .stat-pill, .pill-soft, .health-pill, .status-chip, .mini-btn { background: rgba(228,184,74,.08) !important; border-color: rgba(228,184,74,.22) !important; }
 .pred-digit.active, .pred-digit.predicted, .pred-digit.is-hot, .live-flow-node.active, .contract-tab.active { background: linear-gradient(135deg,#7a510c,#d4af37) !important; border-color: var(--glass-line-strong) !important; color: #fff5d0 !important; }
 
+.burst-toggle { gap: 6px !important; }
+.burst-toggle input { width: 14px !important; height: 14px !important; }
+.burst-chip { gap: 5px !important; padding: 5px 8px !important; font-size: 10px !important; }
+.burst-chip input { width: 12px !important; height: 12px !important; }
+.hl-jump-btn { min-height: 32px !important; padding: 6px 8px !important; font-size: 11px !important; }
+
 .license-gate { background: radial-gradient(780px 520px at 50% -12%,rgba(228,184,74,.18),transparent 68%),#070a0f !important; }
 .license-gate .login-card, .license-gate .license-card { background: linear-gradient(145deg,rgba(35,31,22,.82),rgba(11,16,23,.86)) !important; border-color: var(--glass-line-strong) !important; backdrop-filter: blur(24px) saturate(135%) !important; }
 .license-gate .login-btn { background: linear-gradient(135deg,#8a5d12,#e4b84a) !important; color: #17120a !important; }
@@ -15299,6 +15307,7 @@ body.license-authenticated #fb-win { display: flex !important; }
   .app-nav::-webkit-scrollbar { display: none !important; }
   .nav-link { flex: 0 0 auto !important; width: auto !important; min-height: 42px !important; padding: 10px 13px !important; border-radius: 12px !important; white-space: nowrap !important; }
   .shell-content { width: 100% !important; overflow: visible !important; }
+  .shell-content > main { max-height: calc(100vh - 78px) !important; overflow-y: auto !important; overscroll-behavior: contain; padding-right: 0 !important; }
   .app-header { flex-wrap: wrap !important; padding: 12px !important; gap: 10px !important; }
   .app-header-right { width: 100% !important; justify-content: flex-start !important; flex-wrap: wrap !important; }
   .app-title-main { font-size: 17px !important; }
@@ -15756,30 +15765,8 @@ body.license-authenticated #fb-win { display: flex !important; }
   });
 })();
 
-/* ===== YskellAI SaaS Notifications ===== */
-const fgSupabaseCfg = window.YSKELLAI_CONFIG || null;
-const fgSupabase = (window.supabase && fgSupabaseCfg && fgSupabaseCfg.SUPABASE_URL && fgSupabaseCfg.SUPABASE_ANON_KEY)
-  ? window.supabase.createClient(fgSupabaseCfg.SUPABASE_URL, fgSupabaseCfg.SUPABASE_ANON_KEY)
-  : null;
-
-// ── RUN ACCESS GATE ───────────────────────────────────────────────────────
-(async function fgRunAccessGate() {
-  if (fgSupabase) {
-    try {
-      var res = await fgSupabase.auth.getSession();
-      var session = res && res.data && res.data.session;
-      if (session && session.user) {
-        window.fgCurrentUserEmail = session.user.email;
-      }
-    } catch(e) {}
-  }
-})();
-// ── END ACCESS GATE ───────────────────────────────────────────────────────
-
-let fgNotifChannel = null;
 let fgNotificationQueue = [];
 let fgNotificationBusy = false;
-let fgCurrentUserEmail = null;
 
 function enqueueYskellAINotification(message, variant = "info") {
   if (!message) return;
@@ -15802,15 +15789,6 @@ function drainYskellAINotificationQueue() {
   }, 4200);
 }
 
-async function markYskellAINotificationRead(id) {
-  try {
-    if (!fgSupabase || !id) return;
-    await fgSupabase.from("notifications").update({ read: true }).eq("id", id);
-  } catch (e) {
-    safeConsole.warn("Notification read update failed", e);
-  }
-}
-
 function getNotificationVariant(type, message) {
   const t = String(type || "").toLowerCase();
   const msg = String(message || "").toLowerCase();
@@ -15818,69 +15796,6 @@ function getNotificationVariant(type, message) {
   if (t.includes("due") || msg.includes("due soon") || msg.includes("expires soon")) return "info";
   return "good";
 }
-
-async function flushUnreadYskellAINotifications(email) {
-  try {
-    if (!fgSupabase || !email) return;
-    const { data, error } = await fgSupabase
-      .from("notifications")
-      .select("id,message,type,created_at,read")
-      .eq("user_email", email)
-      .eq("read", false)
-      .order("created_at", { ascending: true })
-      .limit(10);
-
-    if (error || !data || !data.length) return;
-
-    for (const row of data) {
-      enqueueYskellAINotification(row.message, getNotificationVariant(row.type, row.message));
-      await markYskellAINotificationRead(row.id);
-    }
-  } catch (e) {
-    safeConsole.warn("Unread notifications fetch failed", e);
-  }
-}
-
-async function initYskellAINotifications() {
-  try {
-    if (!fgSupabase) {
-      safeConsole.warn("Supabase config missing for trading notifications.");
-      return;
-    }
-
-    const sessionRes = await fgSupabase.auth.getSession();
-    const sessionUser = sessionRes && sessionRes.data && sessionRes.data.session ? sessionRes.data.session.user : null;
-    const email = sessionUser && sessionUser.email ? String(sessionUser.email).toLowerCase() : null;
-    if (!email) return;
-
-    fgCurrentUserEmail = email;
-
-    await flushUnreadYskellAINotifications(email);
-
-    if (fgNotifChannel) {
-      try { await fgSupabase.removeChannel(fgNotifChannel); } catch (e) {}
-      fgNotifChannel = null;
-    }
-
-    fgNotifChannel = fgSupabase
-      .channel("yskellai-user-notifications-" + email)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, async (payload) => {
-        const row = payload && payload.new ? payload.new : null;
-        if (!row) return;
-        const targetEmail = String(row.user_email || "").toLowerCase();
-        if (targetEmail !== email) return;
-        enqueueYskellAINotification(row.message, getNotificationVariant(row.type, row.message));
-        await markYskellAINotificationRead(row.id);
-      })
-      .subscribe();
-  } catch (e) {
-    safeConsole.warn("initYskellAINotifications failed", e);
-  }
-}
-
-setTimeout(() => {
-  initYskellAINotifications();
-}, 600);
 
 /* ===== YskellAI Patch: AI Sequential + Auto TP/SL ===== */
 let fgAutoRiskPatched = true;
@@ -16821,6 +16736,14 @@ setTimeout(() => {
   #mastermindFrame{min-height:720px;}
 }
 /* ===== End YskellAI + Mastermind polish patch ===== */
+
+#burstPanel .burst-toggle { gap: 4px !important; font-size: 11px !important; }
+#burstPanel .burst-toggle input { width: 12px !important; height: 12px !important; }
+#burstPanel .burst-chip { min-height: 26px !important; gap: 4px !important; padding: 3px 6px !important; font-size: 9px !important; }
+#burstPanel .burst-chip input { width: 11px !important; height: 11px !important; }
+#burstPanel .burst-actions .btn { min-height: 30px !important; padding: 5px 8px !important; font-size: 10px !important; border-radius: 8px !important; }
+#burstPanel .burst-max-input { min-height: 30px !important; padding: 4px 8px !important; }
+#hlJumpPairGrid .hl-jump-btn { min-height: 28px !important; padding: 4px 6px !important; font-size: 10px !important; border-radius: 9px !important; }
 </style>
 
 <div id="fgCi" role="dialog" aria-modal="true" aria-label="Contract type explainer">
@@ -16862,7 +16785,7 @@ setTimeout(() => {
       tip:"Best on Vol 25 / Vol 25 (1s) with a 1-tick duration. Let the Sequential AI rotate cold digits instead of repeating one."
     },
     matches: {
-      icon:'🎯', name:'Matches', tag:'Low win-rate · high payout', tagBg:'rgba(239,68,68,0.16)', tagFg:'#fca5a5',
+      icon:'🎯', name:'Hybrid', tag:'Low win-rate · high payout', tagBg:'rgba(239,68,68,0.16)', tagFg:'#fca5a5',
       what:"You pick a digit (0–9). The trade wins only when the last digit of the price <b>matches</b> your selected digit.",
       pay:"About a <b>10% chance to win</b>, with a high payout that is typically around <b>8–9× your stake</b>. Deriv shows the exact live quote before purchase.",
       eg:"Stake <b>$1</b> on digit 7 → if the last digit is 7, the return may be around <b>$8–$10</b> depending on the live quote. Any other digit loses the stake.",
@@ -17058,4 +16981,31 @@ function fgSeqUoDecisionFor(symbol, history){
 }
 
 function fgSeqUoSend(symbol, decision){
-  if (!fgSequentialUnderOverIsActive() || !decision || !isAuthorized || !ws || ws.readyS
+  if (!fgSequentialUnderOverIsActive() || !decision || !isAuthorized || !ws || ws.readyState !== 1) return false;
+  const stake = Number.parseFloat(stakeInput && stakeInput.value) || 1;
+  const reqId = nextReqId();
+  const proposal = {
+    proposal: 1,
+    amount: stake,
+    basis: 'stake',
+    contract_type: decision.contract_type,
+    currency: 'USD',
+    symbol,
+    barrier: decision.barrier,
+    duration: decision.duration || 1,
+    duration_unit: decision.duration_unit || 't',
+    passthrough: { mode: 'seq_uo', symbol, sentAt: Date.now(), req_id: reqId }
+  };
+  burstPendingByReq.set(reqId, {
+    symbol,
+    decision,
+    stake,
+    sentAt: Date.now(),
+    stage: 'proposal',
+    kind: 'seq_uo',
+    modeLabel: 'seq-underover'
+  });
+  safeSend(Object.assign({ req_id: reqId }, proposal));
+  return true;
+}
+</script>
