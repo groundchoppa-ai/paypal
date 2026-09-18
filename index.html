@@ -4274,7 +4274,7 @@ body::before {
     <input class="login-input license-input" id="licenseKeyInput" autocomplete="off" placeholder="YSKELL-XXXX-XXXX" required />
     <button class="login-btn" type="submit">Unlock terminal</button>
     <div class="login-error" id="licenseLoginError" role="alert"></div>
-    <a class="license-contact" href="https://t.me/Yskell" target="_blank" rel="noopener noreferrer">✈ Contact Yskell on Telegram</a>
+    <a class="license-contact" href="https://t.me/Yskell" target="_blank" rel="noopener noreferrer">Contact Yskell on Telegram</a>
     <button class="pricing-trigger" id="pricingTrigger" type="button">View pricing</button>
     <p class="license-hint">Keys expire according to the plan selected by the administrator.</p>
   </form>
@@ -5630,7 +5630,8 @@ body::before {
   const pricingClose = document.getElementById("pricingClose");
   const pricingDismiss = document.getElementById("pricingDismiss");
   const ADMIN_LICENSE_KEY = "YSKELL-ADMIN-2026";
-  const LICENSE_API_URL = "/.netlify/functions/license-store";
+  const LICENSE_API_URL = window.YSKELLAI_LICENSE_API_URL ||
+    (window.location.protocol === "file:" ? "https://yskellai.netlify.app/.netlify/functions/license-store" : "/.netlify/functions/license-store");
   const LICENSE_LOCAL_KEY = "yskellai_license_records";
   const WEB_DATA_LOCAL_KEY = "yskellai_web_saved_data";
 
@@ -5701,32 +5702,31 @@ body::before {
   async function saveSharedLicenseRecord(record) {
     try {
       if (!record || !record.key) return;
-      const existing = readLocalLicenseRecords();
-      const index = existing.findIndex(function(item) { return String(item.key || "").toUpperCase() === String(record.key || "").toUpperCase(); });
-      if (index >= 0) existing[index] = record;
-      else existing.unshift(record);
-      writeLocalLicenseRecords(existing);
-
-      var webData = loadWebData({ licenses: existing });
-      webData.licenses = existing;
-      saveWebData(webData);
-
       try {
-        await fetch(LICENSE_API_URL, {
+        const response = await fetch(LICENSE_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "save", record: record })
         });
+        if (!response.ok) throw new Error("License server returned " + response.status);
+        const result = await response.json();
+        if (!result || result.ok !== true) throw new Error("License server rejected the key");
+        const existing = readLocalLicenseRecords();
+        const index = existing.findIndex(function(item) { return String(item.key || "").toUpperCase() === String(record.key || "").toUpperCase(); });
+        if (index >= 0) existing[index] = record;
+        else existing.unshift(record);
+        writeLocalLicenseRecords(existing);
+        var webData = loadWebData({ licenses: existing });
+        webData.licenses = existing;
+        saveWebData(webData);
+        return true;
       } catch (e) {
         safeConsole.warn("Shared license save failed.", e);
+        return false;
       }
     } catch (e) {
       safeConsole.warn("Shared license save failed.", e);
-      const existing = readLocalLicenseRecords();
-      const index = existing.findIndex(function(item) { return String(item.key || "").toUpperCase() === String(record.key || "").toUpperCase(); });
-      if (index >= 0) existing[index] = record;
-      else existing.unshift(record);
-      writeLocalLicenseRecords(existing);
+      return false;
     }
   }
 
@@ -5917,7 +5917,11 @@ body::before {
     var key = makeLicenseKey();
     var plan = document.getElementById("adminKeyDuration").value;
     var record = { key: key, label: document.getElementById("adminKeyLabel").value.trim(), plan: plan, created: new Date().toLocaleDateString(), expiresAt: licenseExpiryForPlan(plan) };
-    await saveSharedLicenseRecord(record);
+    var saved = await saveSharedLicenseRecord(record);
+    if (!saved) {
+      document.getElementById("adminStatus").textContent = "Could not save key to the shared server. Deploy the Netlify function first.";
+      return;
+    }
     document.getElementById("generatedLicenseKey").textContent = key;
     document.getElementById("adminKeyOutput").style.display = "flex";
     document.getElementById("adminStatus").textContent = "License generated.";
